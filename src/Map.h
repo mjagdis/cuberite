@@ -82,6 +82,12 @@ private:
 class cMap
 {
 public:
+	// tolua_end
+
+	static const int MAP_WIDTH = 128;
+	static const int MAP_HEIGHT = 128;
+
+	// tolua_begin
 
 	enum eBaseColor
 	{
@@ -106,7 +112,6 @@ public:
 
 	// tolua_end
 
-	typedef std::vector<ColorID> cColorList;
 	typedef std::vector<cClientHandle *> cMapClientList;
 	typedef std::vector<cMapDecorator> cMapDecoratorList;
 
@@ -131,18 +136,16 @@ public:
 
 	// tolua_begin
 
-	void Resize(unsigned int a_Width, unsigned int a_Height);
-
 	void SetPosition(int a_CenterX, int a_CenterZ);
 
 	void SetScale(unsigned int a_Scale) { m_Scale = a_Scale; }
 
 	bool SetPixel(unsigned int a_X, unsigned int a_Z, ColorID a_Data);
 
-	ColorID GetPixel(unsigned int a_X, unsigned int a_Z);
+	ColorID GetPixel(unsigned int a_X, unsigned int a_Z) const;
 
-	unsigned int GetWidth (void) const { return m_Width;  }
-	unsigned int GetHeight(void) const { return m_Height; }
+	unsigned int GetWidth (void) const { return MAP_WIDTH;  }
+	unsigned int GetHeight(void) const { return MAP_HEIGHT; }
 
 	unsigned int GetScale(void) const { return m_Scale; }
 
@@ -167,17 +170,12 @@ public:
 
 	const cMapDecoratorList GetDecorators(void) const { return m_Decorators; }
 
-	const cColorList & GetData(void) const { return m_Data; }
-
 private:
 
 	/** Update the specified pixel. */
 	bool UpdatePixel(unsigned int a_X, unsigned int a_Z);
 
 	unsigned int m_ID;
-
-	unsigned int m_Width;
-	unsigned int m_Height;
 
 	/** The zoom level, 2^scale square blocks per pixel */
 	unsigned int m_Scale;
@@ -188,7 +186,7 @@ private:
 	bool m_Dirty;
 
 	/** Column-major array of colours */
-	cColorList m_Data;
+	ColorID m_Data[MAP_WIDTH * MAP_HEIGHT];
 
 	cWorld * m_World;
 

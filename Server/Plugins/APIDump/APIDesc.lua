@@ -8825,21 +8825,6 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the associated world.",
 				},
-				Resize =
-				{
-					Params =
-					{
-						{
-							Name = "Width",
-							Type = "number",
-						},
-						{
-							Name = "Height",
-							Type = "number",
-						},
-					},
-					Notes = "Resizes the map. WARNING: This will erase the pixel data.",
-				},
 				SetPixel =
 				{
 					Params =

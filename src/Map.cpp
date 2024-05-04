@@ -18,8 +18,6 @@
 
 cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_ID(a_ID),
-	m_Width(cChunkDef::Width * 8),
-	m_Height(cChunkDef::Width * 8),
 	m_Scale(3),
 	m_CenterX(0),
 	m_CenterZ(0),
@@ -27,7 +25,6 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_World(a_World),
 	m_Name(fmt::format(FMT_STRING("map_{}"), m_ID))
 {
-	m_Data.assign(m_Width * m_Height, E_BASE_COLOR_TRANSPARENT);
 }
 
 
@@ -36,8 +33,6 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 
 cMap::cMap(unsigned int a_ID, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale):
 	m_ID(a_ID),
-	m_Width(cChunkDef::Width * 8),
-	m_Height(cChunkDef::Width * 8),
 	m_Scale(a_Scale),
 	m_CenterX(a_CenterX),
 	m_CenterZ(a_CenterZ),
@@ -45,7 +40,6 @@ cMap::cMap(unsigned int a_ID, int a_CenterX, int a_CenterZ, cWorld * a_World, un
 	m_World(a_World),
 	m_Name(fmt::format(FMT_STRING("map_{}"), m_ID))
 {
-	m_Data.assign(m_Width * m_Height, E_BASE_COLOR_TRANSPARENT);
 }
 
 
@@ -70,11 +64,11 @@ void cMap::UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius)
 {
 	int PixelRadius = static_cast<int>(a_Radius / GetPixelWidth());
 
-	unsigned int StartX = static_cast<unsigned int>(Clamp(a_PixelX - PixelRadius, 0, static_cast<int>(m_Width)));
-	unsigned int StartZ = static_cast<unsigned int>(Clamp(a_PixelZ - PixelRadius, 0, static_cast<int>(m_Height)));
+	unsigned int StartX = static_cast<unsigned int>(Clamp(a_PixelX - PixelRadius, 0, MAP_WIDTH));
+	unsigned int StartZ = static_cast<unsigned int>(Clamp(a_PixelZ - PixelRadius, 0, MAP_HEIGHT));
 
-	unsigned int EndX   = static_cast<unsigned int>(Clamp(a_PixelX + PixelRadius, 0, static_cast<int>(m_Width)));
-	unsigned int EndZ   = static_cast<unsigned int>(Clamp(a_PixelZ + PixelRadius, 0, static_cast<int>(m_Height)));
+	unsigned int EndX   = static_cast<unsigned int>(Clamp(a_PixelX + PixelRadius, 0, MAP_WIDTH));
+	unsigned int EndZ   = static_cast<unsigned int>(Clamp(a_PixelZ + PixelRadius, 0, MAP_HEIGHT));
 
 	for (unsigned int X = StartX; X < EndX; ++X)
 	{
@@ -99,8 +93,8 @@ void cMap::UpdateRadius(cPlayer & a_Player, unsigned int a_Radius)
 {
 	int PixelWidth = static_cast<int>(GetPixelWidth());
 
-	int PixelX = static_cast<int>(a_Player.GetPosX() - m_CenterX) / PixelWidth + static_cast<int>(m_Width  / 2);
-	int PixelZ = static_cast<int>(a_Player.GetPosZ() - m_CenterZ) / PixelWidth + static_cast<int>(m_Height / 2);
+	int PixelX = static_cast<int>(a_Player.GetPosX() - m_CenterX) / PixelWidth + MAP_WIDTH  / 2;
+	int PixelZ = static_cast<int>(a_Player.GetPosZ() - m_CenterZ) / PixelWidth + MAP_HEIGHT / 2;
 
 	UpdateRadius(PixelX, PixelZ, a_Radius);
 }
@@ -111,8 +105,8 @@ void cMap::UpdateRadius(cPlayer & a_Player, unsigned int a_Radius)
 
 bool cMap::UpdatePixel(unsigned int a_X, unsigned int a_Z)
 {
-	int BlockX = m_CenterX + static_cast<int>((a_X - m_Width  / 2) * GetPixelWidth());
-	int BlockZ = m_CenterZ + static_cast<int>((a_Z - m_Height / 2) * GetPixelWidth());
+	int BlockX = m_CenterX + (static_cast<int>(a_X) - MAP_WIDTH  / 2) * GetPixelWidth();
+	int BlockZ = m_CenterZ + (static_cast<int>(a_Z) - MAP_HEIGHT / 2) * GetPixelWidth();
 
 	int ChunkX, ChunkZ;
 	cChunkDef::BlockToChunk(BlockX, BlockZ, ChunkX, ChunkZ);
@@ -194,23 +188,6 @@ eDimension cMap::GetDimension(void) const
 
 
 
-void cMap::Resize(unsigned int a_Width, unsigned int a_Height)
-{
-	if ((m_Width == a_Width) && (m_Height == a_Height))
-	{
-		return;
-	}
-
-	m_Width = a_Width;
-	m_Height = a_Height;
-
-	m_Data.assign(m_Width * m_Height, 0);
-}
-
-
-
-
-
 void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 {
 	m_CenterX = a_CenterX;
@@ -223,9 +200,9 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 bool cMap::SetPixel(unsigned int a_X, unsigned int a_Z, cMap::ColorID a_Data)
 {
-	if ((a_X < m_Width) && (a_Z < m_Height))
+	if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
 	{
-		auto index = a_Z * m_Width + a_X;
+		auto index = a_Z * MAP_WIDTH + a_X;
 
 		if (m_Data[index] != a_Data)
 		{
@@ -245,11 +222,11 @@ bool cMap::SetPixel(unsigned int a_X, unsigned int a_Z, cMap::ColorID a_Data)
 
 
 
-cMap::ColorID cMap::GetPixel(unsigned int a_X, unsigned int a_Z)
+cMap::ColorID cMap::GetPixel(unsigned int a_X, unsigned int a_Z) const
 {
-	if ((a_X < m_Width) && (a_Z < m_Height))
+	if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
 	{
-		return m_Data[a_Z * m_Width + a_X];
+		return m_Data[a_Z * MAP_WIDTH + a_X];
 	}
 	else
 	{
@@ -263,7 +240,7 @@ cMap::ColorID cMap::GetPixel(unsigned int a_X, unsigned int a_Z)
 
 unsigned int cMap::GetNumPixels(void) const
 {
-	return m_Width * m_Height;
+	return MAP_WIDTH * MAP_HEIGHT;
 }
 
 
