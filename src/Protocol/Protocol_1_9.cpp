@@ -446,7 +446,7 @@ void cProtocol_1_9_0::SendMapData(const cMap & a_Map, int a_DataStartX, int a_Da
 	Pkt.WriteVarInt32(a_Map.GetID());
 	Pkt.WriteBEUInt8(static_cast<UInt8>(a_Map.GetScale()));
 
-	Pkt.WriteBool(true);
+	Pkt.WriteBool(a_Map.GetTrackingPosition());
 	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
 	for (const auto & Decorator : a_Map.GetDecorators())
 	{
