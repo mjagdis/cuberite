@@ -71,9 +71,17 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 	a_Writer.AddByte("scale", static_cast<Byte>(m_Map->GetScale()));
 	a_Writer.AddByte("dimension", static_cast<Byte>(m_Map->GetDimension()));
 
-	// 1.12.2 and earlier includes width and height, later don't
+	// 1.12 and earlier includes width and height, later don't
 	a_Writer.AddShort("width",  static_cast<Int16>(m_Map->MAP_WIDTH));
 	a_Writer.AddShort("height", static_cast<Int16>(m_Map->MAP_HEIGHT));
+
+	// 1.12 and later include trackingPosition and unlimitedTracking
+	a_Writer.AddByte("trackingPosition", (m_Map->m_TrackingPosition ? 1 : 0));
+	a_Writer.AddByte("unlimitedTracking", (m_Map->m_UnlimitedTracking ? 1 : 0));
+
+	// Configurable tracking thresholds are a Cuberite addition (they're hardcoded in Minecraft)
+	a_Writer.AddInt("TrackingThreshold", m_Map->GetTrackingThreshold());
+	a_Writer.AddInt("FarTrackingThreshold", m_Map->GetFarTrackingThreshold());
 
 	a_Writer.AddInt("xCenter", m_Map->GetCenterX());
 	a_Writer.AddInt("zCenter", m_Map->GetCenterZ());
@@ -112,6 +120,30 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 			// TODO 2014-03-20 xdot: We should store nether maps in nether worlds, e.t.c.
 			return false;
 		}
+	}
+
+	// 1.12 and later include trackingPosition and unlimitedTracking
+	CurrLine = a_NBT.FindChildByName(Data, "trackingPosition");
+	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
+	{
+		m_Map->m_TrackingPosition = a_NBT.GetByte(CurrLine);
+	}
+	CurrLine = a_NBT.FindChildByName(Data, "unlimitedTracking");
+	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
+	{
+		m_Map->m_UnlimitedTracking = a_NBT.GetByte(CurrLine);
+	}
+
+	// Configurable tracking thresholds are a Cuberite addition (they're hardcoded in Minecraft)
+	CurrLine = a_NBT.FindChildByName(Data, "TrackingThreshold");
+	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+	{
+		m_Map->m_TrackingThreshold = a_NBT.GetInt(CurrLine);
+	}
+	CurrLine = a_NBT.FindChildByName(Data, "FarTrackingThreshold");
+	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+	{
+		m_Map->m_FarTrackingThreshold = a_NBT.GetInt(CurrLine);
 	}
 
 	CurrLine = a_NBT.FindChildByName(Data, "xCenter");
