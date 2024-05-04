@@ -455,14 +455,20 @@ void cProtocol_1_9_0::SendMapData(const cMap & a_Map, int a_DataStartX, int a_Da
 		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.GetPixelZ()));
 	}
 
-	Pkt.WriteBEUInt8(128);
-	Pkt.WriteBEUInt8(128);
+	Pkt.WriteBEUInt8(a_Map.MAP_WIDTH - a_DataStartX);
+	Pkt.WriteBEUInt8(a_Map.MAP_HEIGHT - a_DataStartY);
 	Pkt.WriteBEUInt8(static_cast<UInt8>(a_DataStartX));
 	Pkt.WriteBEUInt8(static_cast<UInt8>(a_DataStartY));
-	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetData().size()));
-	for (auto itr = a_Map.GetData().cbegin(); itr != a_Map.GetData().cend(); ++itr)
+
+	unsigned int count = (a_Map.MAP_WIDTH - a_DataStartX) * (a_Map.MAP_HEIGHT - a_DataStartY);
+	Pkt.WriteVarInt32(static_cast<UInt32>(count));
+
+	for (unsigned int y = a_DataStartY; y < a_Map.MAP_HEIGHT; y++)
 	{
-		Pkt.WriteBEUInt8(*itr);
+		for (unsigned int x = a_DataStartX; x < a_Map.MAP_WIDTH; x++)
+		{
+			Pkt.WriteBEUInt8(a_Map.GetPixel(x, y));
+		}
 	}
 }
 

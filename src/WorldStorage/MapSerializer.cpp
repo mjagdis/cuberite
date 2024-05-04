@@ -71,14 +71,14 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 	a_Writer.AddByte("scale", static_cast<Byte>(m_Map->GetScale()));
 	a_Writer.AddByte("dimension", static_cast<Byte>(m_Map->GetDimension()));
 
-	a_Writer.AddShort("width",  static_cast<Int16>(m_Map->GetWidth()));
-	a_Writer.AddShort("height", static_cast<Int16>(m_Map->GetHeight()));
+	// 1.12.2 and earlier includes width and height, later don't
+	a_Writer.AddShort("width",  static_cast<Int16>(m_Map->MAP_WIDTH));
+	a_Writer.AddShort("height", static_cast<Int16>(m_Map->MAP_HEIGHT));
 
 	a_Writer.AddInt("xCenter", m_Map->GetCenterX());
 	a_Writer.AddInt("zCenter", m_Map->GetCenterZ());
 
-	const cMap::cColorList & Data = m_Map->GetData();
-	a_Writer.AddByteArray("colors", reinterpret_cast<const char *>(Data.data()), Data.size());
+	a_Writer.AddByteArray("colors", reinterpret_cast<const char *>(m_Map->m_Data), m_Map->GetNumPixels());
 
 	a_Writer.EndCompound();
 }
@@ -114,28 +114,6 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 		}
 	}
 
-	CurrLine = a_NBT.FindChildByName(Data, "width");
-	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Short))
-	{
-		unsigned int Width = static_cast<unsigned int>(a_NBT.GetShort(CurrLine));
-		if (Width != 128)
-		{
-			return false;
-		}
-		m_Map->m_Width = Width;
-	}
-
-	CurrLine = a_NBT.FindChildByName(Data, "height");
-	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Short))
-	{
-		unsigned int Height = static_cast<unsigned int>(a_NBT.GetShort(CurrLine));
-		if (Height >= cChunkDef::Height)
-		{
-			return false;
-		}
-		m_Map->m_Height = Height;
-	}
-
 	CurrLine = a_NBT.FindChildByName(Data, "xCenter");
 	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
 	{
@@ -150,13 +128,17 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 		m_Map->m_CenterZ = CenterZ;
 	}
 
-	unsigned int NumPixels = m_Map->GetNumPixels();
-	m_Map->m_Data.resize(NumPixels);
-
 	CurrLine = a_NBT.FindChildByName(Data, "colors");
 	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_ByteArray))
 	{
-		memcpy(m_Map->m_Data.data(), a_NBT.GetData(CurrLine), NumPixels);
+		const Byte * data = reinterpret_cast<const Byte *>(a_NBT.GetData(CurrLine));
+		for (unsigned int y = 0; y < m_Map->MAP_HEIGHT; y++)
+		{
+			for (unsigned int x = 0; x < m_Map->MAP_WIDTH; x++)
+			{
+				m_Map->SetPixel(x, y, data[y * m_Map->MAP_WIDTH + x]);
+			}
+		}
 	}
 
 	return true;
