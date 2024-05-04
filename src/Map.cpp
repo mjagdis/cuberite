@@ -22,6 +22,10 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_CenterX(0),
 	m_CenterZ(0),
 	m_Dirty(false),  // This constructor is for an empty map object which will be filled by the caller with the correct values - it does not need saving.
+	m_TrackingPosition(true),
+	m_UnlimitedTracking(false),
+	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
+	m_FarTrackingThreshold(DEFAULT_FAR_TRACKING_DISTANCE),
 	m_World(a_World),
 	m_Name(fmt::format(FMT_STRING("map_{}"), m_ID))
 {
@@ -37,6 +41,10 @@ cMap::cMap(unsigned int a_ID, int a_CenterX, int a_CenterZ, cWorld * a_World, un
 	m_CenterX(a_CenterX),
 	m_CenterZ(a_CenterZ),
 	m_Dirty(true),  // This constructor is for creating a brand new map in game, it will always need saving.
+	m_TrackingPosition(true),
+	m_UnlimitedTracking(false),
+	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
+	m_FarTrackingThreshold(DEFAULT_FAR_TRACKING_DISTANCE),
 	m_World(a_World),
 	m_Name(fmt::format(FMT_STRING("map_{}"), m_ID))
 {
@@ -170,8 +178,13 @@ bool cMap::UpdatePixel(unsigned int a_X, unsigned int a_Z)
 void cMap::UpdateClient(cPlayer * a_Player)
 {
 	ASSERT(a_Player != nullptr);
-	m_Decorators.emplace_back(CreateDecorator(a_Player));
+
 	m_ClientsInCurrentTick.push_back(a_Player->GetClientHandle());
+
+	if (m_TrackingPosition && (m_UnlimitedTracking || GetTrackingDistance(a_Player) <= GetTrackingThreshold() * GetPixelWidth()))
+	{
+		m_Decorators.emplace_back(CreateDecorator(a_Player));
+	}
 }
 
 
@@ -182,6 +195,46 @@ eDimension cMap::GetDimension(void) const
 {
 	ASSERT(m_World != nullptr);
 	return m_World->GetDimension();
+}
+
+
+
+
+
+void cMap::SetTrackingPosition(bool a_OnOff)
+{
+	m_Dirty |= (m_TrackingPosition != a_OnOff);
+	m_TrackingPosition = a_OnOff;
+}
+
+
+
+
+
+void cMap::SetUnlimitedTracking(bool a_OnOff)
+{
+	m_Dirty |= (m_UnlimitedTracking != a_OnOff);
+	m_UnlimitedTracking = a_OnOff;
+}
+
+
+
+
+
+void cMap::SetTrackingThreshold(unsigned int a_Threshold)
+{
+	m_Dirty |= (m_TrackingThreshold != a_Threshold);
+	m_TrackingThreshold = a_Threshold;
+}
+
+
+
+
+
+void cMap::SetFarTrackingThreshold(unsigned int a_Threshold)
+{
+	m_Dirty |= (m_FarTrackingThreshold != a_Threshold);
+	m_FarTrackingThreshold = a_Threshold;
 }
 
 
@@ -229,7 +282,15 @@ const cMapDecorator cMap::CreateDecorator(const cEntity * a_TrackedEntity)
 	else
 	{
 		Rot = 0;
-		Type = cMapDecorator::eType::E_TYPE_PLAYER_OUTSIDE;
+
+		if (GetTrackingDistance(a_TrackedEntity) <= (GetWidth() * GetPixelWidth()) / 2 + GetFarTrackingThreshold())
+		{
+			Type = cMapDecorator::eType::E_TYPE_PLAYER_OUTSIDE;
+		}
+		else
+		{
+			Type = cMapDecorator::eType::E_TYPE_PLAYER_FAR_OUTSIDE;
+		}
 
 		// Move to border
 		if (PixelX <= -InsideWidth)

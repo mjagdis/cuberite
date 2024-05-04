@@ -8723,6 +8723,16 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the dimension of the associated world.",
 				},
+				GetFarTrackingThreshold =
+				{
+					Returns =
+					{
+						{
+							Type = "number",
+						},
+					},
+					Notes = "Returns the far tracking threshold.",
+				},
 				GetHeight =
 				{
 					Returns =
@@ -8805,6 +8815,52 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the scale of the map. Range: [0,4]",
 				},
+				GetTrackingDistance =
+				{
+					Params = {
+						{
+							Name = "TrackedEntity",
+							Type = "cEntity",
+						},
+					},
+					Returns =
+					{
+						{
+							Type = "number",
+						},
+					},
+					Notes = "Returns the distance of an entity from the map centre used for tracking purposes",
+				},
+				GetTrackingPosition =
+				{
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Returns true if entity tracking is enabled.",
+				},
+				GetTrackingThreshold =
+				{
+					Returns =
+					{
+						{
+							Type = "number",
+						},
+					},
+					Notes = "Returns the entity tracking threshold.",
+				},
+				GetUnlimitedTracking =
+				{
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Returns true if unlimited tracking is enabled.",
+				},
 				GetWidth =
 				{
 					Returns =
@@ -8824,6 +8880,17 @@ a_Player:OpenWindow(Window);
 						},
 					},
 					Notes = "Returns the associated world.",
+				},
+				SetFarTrackingThreshold =
+				{
+					Params =
+					{
+						{
+							Name = "Threshold",
+							Type = "number",
+						},
+					},
+					Notes = "Sets the far threshold for entity tracking.",
 				},
 				SetPixel =
 				{
@@ -8876,6 +8943,39 @@ a_Player:OpenWindow(Window);
 						},
 					},
 					Notes = "Rescales the map. The pixel data will not be modified.",
+				},
+				SetTrackingPosition =
+				{
+					Params =
+					{
+						{
+							Name = "OnOff",
+							Type = "boolean",
+						},
+					},
+					Notes = "Turns entity tracking markers on and off.",
+				},
+				SetTrackingThreshold =
+				{
+					Params =
+					{
+						{
+							Name = "Threshold",
+							Type = "number",
+						},
+					},
+					Notes = "Sets the threshold for entity tracking.",
+				},
+				SetUnlimitedTracking =
+				{
+					Params =
+					{
+						{
+							Name = "OnOff",
+							Type = "boolean",
+						},
+					},
+					Notes = "Turns unlimited tracking on and off.",
 				},
 			},
 			Constants =

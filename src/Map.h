@@ -41,7 +41,10 @@ public:
 		E_TYPE_ITEM_FRAME     = 0x01,
 
 		/** Player outside of the boundaries of the map. */
-		E_TYPE_PLAYER_OUTSIDE = 0x06
+		E_TYPE_PLAYER_OUTSIDE = 0x06,
+
+		/** Player far outside of the boundaries of the map. */
+		E_TYPE_PLAYER_FAR_OUTSIDE = 0x07,
 	};
 
 	cMapDecorator(eType a_Type, unsigned int a_X, unsigned int a_Z, int a_Rot) :
@@ -86,6 +89,8 @@ public:
 
 	static const int MAP_WIDTH = 128;
 	static const int MAP_HEIGHT = 128;
+	static const unsigned int DEFAULT_TRACKING_DISTANCE = 320;
+	static const unsigned int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
 
 	// tolua_begin
 
@@ -140,6 +145,14 @@ public:
 
 	void SetScale(unsigned int a_Scale) { m_Scale = a_Scale; }
 
+	void SetTrackingPosition(bool a_OnOff);
+
+	void SetUnlimitedTracking(bool a_OnOff);
+
+	void SetTrackingThreshold(unsigned int a_Threshold);
+
+	void SetFarTrackingThreshold(unsigned int a_Threshold);
+
 	bool SetPixel(unsigned int a_X, unsigned int a_Z, ColorID a_Data)
 	{
 		if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
@@ -182,6 +195,19 @@ public:
 
 	unsigned int GetPixelWidth(void) const { return 1 << m_Scale; }
 
+	bool GetTrackingPosition(void) const { return m_TrackingPosition; }
+
+	bool GetUnlimitedTracking(void) const { return m_UnlimitedTracking; }
+
+	unsigned int GetTrackingThreshold(void) const { return m_TrackingThreshold; }
+
+	unsigned int GetFarTrackingThreshold(void) const { return m_FarTrackingThreshold; }
+
+	unsigned int GetTrackingDistance(const cEntity * a_TrackedEntity) const
+	{
+		return std::max(abs(a_TrackedEntity->GetPosX() - m_CenterX), abs(a_TrackedEntity->GetPosZ() - m_CenterZ));
+	}
+
 	// tolua_end
 
 	const cMapDecorator CreateDecorator(const cEntity * a_TrackedEntity);
@@ -202,6 +228,11 @@ private:
 	int m_CenterZ;
 
 	bool m_Dirty;
+
+	bool m_TrackingPosition;
+	bool m_UnlimitedTracking;
+	unsigned int m_TrackingThreshold;
+	unsigned int m_FarTrackingThreshold;
 
 	/** Column-major array of colours */
 	ColorID m_Data[MAP_WIDTH * MAP_HEIGHT];
