@@ -198,55 +198,6 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 
 
-bool cMap::SetPixel(unsigned int a_X, unsigned int a_Z, cMap::ColorID a_Data)
-{
-	if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
-	{
-		auto index = a_Z * MAP_WIDTH + a_X;
-
-		if (m_Data[index] != a_Data)
-		{
-			m_Data[index] = a_Data;
-			m_Dirty = true;
-		}
-
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-
-
-
-
-cMap::ColorID cMap::GetPixel(unsigned int a_X, unsigned int a_Z) const
-{
-	if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
-	{
-		return m_Data[a_Z * MAP_WIDTH + a_X];
-	}
-	else
-	{
-		return E_BASE_COLOR_TRANSPARENT;
-	}
-}
-
-
-
-
-
-unsigned int cMap::GetNumPixels(void) const
-{
-	return MAP_WIDTH * MAP_HEIGHT;
-}
-
-
-
-
-
 const cMapDecorator cMap::CreateDecorator(const cEntity * a_TrackedEntity)
 {
 	int InsideWidth = (GetWidth() / 2) - 1;
@@ -300,15 +251,6 @@ const cMapDecorator cMap::CreateDecorator(const cEntity * a_TrackedEntity)
 	}
 
 	return {Type, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), Rot};
-}
-
-
-
-
-
-unsigned int cMap::GetPixelWidth(void) const
-{
-	return static_cast<unsigned int>(pow(2.0, static_cast<double>(m_Scale)));
 }
 
 

@@ -140,9 +140,27 @@ public:
 
 	void SetScale(unsigned int a_Scale) { m_Scale = a_Scale; }
 
-	bool SetPixel(unsigned int a_X, unsigned int a_Z, ColorID a_Data);
+	bool SetPixel(unsigned int a_X, unsigned int a_Z, ColorID a_Data)
+	{
+		if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
+		{
+			auto index = a_Z * MAP_WIDTH + a_X;
 
-	ColorID GetPixel(unsigned int a_X, unsigned int a_Z) const;
+			m_Dirty |= (m_Data[index] != a_Data);
+			m_Data[index] = a_Data;
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	ColorID GetPixel(unsigned int a_X, unsigned int a_Z) const
+	{
+		return ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT)) ? m_Data[a_Z * MAP_WIDTH + a_X] : 0;
+	}
 
 	unsigned int GetWidth (void) const { return MAP_WIDTH;  }
 	unsigned int GetHeight(void) const { return MAP_HEIGHT; }
@@ -160,9 +178,9 @@ public:
 
 	eDimension GetDimension(void) const;
 
-	unsigned int GetNumPixels(void) const;
+	unsigned int GetNumPixels(void) const { return MAP_WIDTH * MAP_HEIGHT; }
 
-	unsigned int GetPixelWidth(void) const;
+	unsigned int GetPixelWidth(void) const { return 1 << m_Scale; }
 
 	// tolua_end
 
