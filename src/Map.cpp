@@ -22,6 +22,7 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_CenterX(0),
 	m_CenterZ(0),
 	m_Dirty(false),  // This constructor is for an empty map object which will be filled by the caller with the correct values - it does not need saving.
+	m_Locked(false),
 	m_TrackingPosition(true),
 	m_UnlimitedTracking(false),
 	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
@@ -41,6 +42,7 @@ cMap::cMap(unsigned int a_ID, int a_CenterX, int a_CenterZ, cWorld * a_World, un
 	m_CenterX(a_CenterX),
 	m_CenterZ(a_CenterZ),
 	m_Dirty(true),  // This constructor is for creating a brand new map in game, it will always need saving.
+	m_Locked(false),
 	m_TrackingPosition(true),
 	m_UnlimitedTracking(false),
 	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
@@ -70,24 +72,27 @@ void cMap::Tick()
 
 void cMap::UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius)
 {
-	int PixelRadius = static_cast<int>(a_Radius / GetPixelWidth());
-
-	unsigned int StartX = static_cast<unsigned int>(Clamp(a_PixelX - PixelRadius, 0, MAP_WIDTH));
-	unsigned int StartZ = static_cast<unsigned int>(Clamp(a_PixelZ - PixelRadius, 0, MAP_HEIGHT));
-
-	unsigned int EndX   = static_cast<unsigned int>(Clamp(a_PixelX + PixelRadius, 0, MAP_WIDTH));
-	unsigned int EndZ   = static_cast<unsigned int>(Clamp(a_PixelZ + PixelRadius, 0, MAP_HEIGHT));
-
-	for (unsigned int X = StartX; X < EndX; ++X)
+	if (!m_Locked)
 	{
-		for (unsigned int Z = StartZ; Z < EndZ; ++Z)
-		{
-			int dX = static_cast<int>(X) - a_PixelX;
-			int dZ = static_cast<int>(Z) - a_PixelZ;
+		int PixelRadius = static_cast<int>(a_Radius / GetPixelWidth());
 
-			if ((dX * dX) + (dZ * dZ) < (PixelRadius * PixelRadius))
+		unsigned int StartX = static_cast<unsigned int>(Clamp(a_PixelX - PixelRadius, 0, MAP_WIDTH));
+		unsigned int StartZ = static_cast<unsigned int>(Clamp(a_PixelZ - PixelRadius, 0, MAP_HEIGHT));
+
+		unsigned int EndX   = static_cast<unsigned int>(Clamp(a_PixelX + PixelRadius, 0, MAP_WIDTH));
+		unsigned int EndZ   = static_cast<unsigned int>(Clamp(a_PixelZ + PixelRadius, 0, MAP_HEIGHT));
+
+		for (unsigned int X = StartX; X < EndX; ++X)
+		{
+			for (unsigned int Z = StartZ; Z < EndZ; ++Z)
 			{
-				UpdatePixel(X, Z);
+				int dX = static_cast<int>(X) - a_PixelX;
+				int dZ = static_cast<int>(Z) - a_PixelZ;
+
+				if ((dX * dX) + (dZ * dZ) < (PixelRadius * PixelRadius))
+				{
+					UpdatePixel(X, Z);
+				}
 			}
 		}
 	}
@@ -195,6 +200,16 @@ eDimension cMap::GetDimension(void) const
 {
 	ASSERT(m_World != nullptr);
 	return m_World->GetDimension();
+}
+
+
+
+
+
+void cMap::SetLocked(bool a_OnOff)
+{
+	m_Dirty |= (m_Locked != a_OnOff);
+	m_Locked = a_OnOff;
 }
 
 

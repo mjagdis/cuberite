@@ -75,6 +75,9 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 	a_Writer.AddShort("width",  static_cast<Int16>(m_Map->MAP_WIDTH));
 	a_Writer.AddShort("height", static_cast<Int16>(m_Map->MAP_HEIGHT));
 
+	// 1.14 and later include locked
+	a_Writer.AddByte("locked", (m_Map->m_Locked ? 1 : 0));
+
 	// 1.12 and later include trackingPosition and unlimitedTracking
 	a_Writer.AddByte("trackingPosition", (m_Map->m_TrackingPosition ? 1 : 0));
 	a_Writer.AddByte("unlimitedTracking", (m_Map->m_UnlimitedTracking ? 1 : 0));
@@ -120,6 +123,13 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 			// TODO 2014-03-20 xdot: We should store nether maps in nether worlds, e.t.c.
 			return false;
 		}
+	}
+
+	// 1.14 and later include locked
+	CurrLine = a_NBT.FindChildByName(Data, "locked");
+	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
+	{
+		m_Map->m_Locked = a_NBT.GetByte(CurrLine);
 	}
 
 	// 1.12 and later include trackingPosition and unlimitedTracking
