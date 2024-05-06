@@ -145,6 +145,8 @@ public:
 
 	void SetScale(unsigned int a_Scale) { m_Scale = a_Scale; }
 
+	void SetLocked(bool a_OnOff);
+
 	void SetTrackingPosition(bool a_OnOff);
 
 	void SetUnlimitedTracking(bool a_OnOff);
@@ -195,6 +197,8 @@ public:
 
 	unsigned int GetPixelWidth(void) const { return 1 << m_Scale; }
 
+	bool GetLocked(void) const { return m_Locked; }
+
 	bool GetTrackingPosition(void) const { return m_TrackingPosition; }
 
 	bool GetUnlimitedTracking(void) const { return m_UnlimitedTracking; }
@@ -229,6 +233,7 @@ private:
 
 	bool m_Dirty;
 
+	bool m_Locked;
 	bool m_TrackingPosition;
 	bool m_UnlimitedTracking;
 	unsigned int m_TrackingThreshold;
