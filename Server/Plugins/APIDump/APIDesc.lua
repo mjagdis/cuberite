@@ -8753,6 +8753,16 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the numerical ID of the map. (The item damage value)",
 				},
+				GetLocked =
+				{
+					Returns =
+					{
+						{
+							Type = "boolean",
+						},
+					},
+					Notes = "Returns true if the map is locked.",
+				},
 				GetName =
 				{
 					Returns =
@@ -8891,6 +8901,17 @@ a_Player:OpenWindow(Window);
 						},
 					},
 					Notes = "Sets the far threshold for entity tracking.",
+				},
+				SetLocked =
+				{
+					Params =
+					{
+						{
+							Name = "OnOff",
+							Type = "boolean",
+						},
+					},
+					Notes = "Turns the locked state on and off.",
 				},
 				SetPixel =
 				{
