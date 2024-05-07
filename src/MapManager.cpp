@@ -89,7 +89,7 @@ cMap * cMapManager::GetMapData(unsigned int a_ID)
 
 
 
-cMap * cMapManager::CreateMap(int a_CenterX, int a_CenterY, unsigned int a_Scale)
+cMap * cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
 {
 	cCSLock Lock(m_CS);
 
@@ -99,7 +99,7 @@ cMap * cMapManager::CreateMap(int a_CenterX, int a_CenterY, unsigned int a_Scale
 		return nullptr;
 	}
 
-	cMap Map(static_cast<unsigned>(m_MapData.size()), a_CenterX, a_CenterY, m_World, a_Scale);
+	cMap Map(static_cast<unsigned>(m_MapData.size()), a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
 
 	m_MapData.push_back(Map);
 
