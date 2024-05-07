@@ -36,15 +36,15 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 
 
 
-cMap::cMap(unsigned int a_ID, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale):
+cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale):
 	m_ID(a_ID),
 	m_Scale(a_Scale),
 	m_CenterX(a_CenterX),
 	m_CenterZ(a_CenterZ),
 	m_Dirty(true),  // This constructor is for creating a brand new map in game, it will always need saving.
 	m_Locked(false),
-	m_TrackingPosition(true),
-	m_UnlimitedTracking(false),
+	m_TrackingPosition(a_MapType == E_EMPTY_MAP_TYPE_SIMPLE ? false : true),
+	m_UnlimitedTracking(a_MapType == E_EMPTY_MAP_TYPE_EXPLORER ? true : false),
 	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
 	m_FarTrackingThreshold(DEFAULT_FAR_TRACKING_DISTANCE),
 	m_World(a_World),

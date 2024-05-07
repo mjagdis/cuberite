@@ -31,7 +31,6 @@ public:
 		eBlockFace a_ClickedBlockFace
 	) const override
 	{
-		UNUSED(a_HeldItem);
 		UNUSED(a_ClickedBlockFace);
 
 		// The map center is fixed at the central point of the 8x8 block of chunks you are standing in when you right-click it.
@@ -41,7 +40,7 @@ public:
 		int CenterX = FloorC(a_Player->GetPosX() / RegionWidth) * RegionWidth + (RegionWidth / 2);
 		int CenterZ = FloorC(a_Player->GetPosZ() / RegionWidth) * RegionWidth + (RegionWidth / 2);
 
-		auto NewMap = a_World->GetMapManager().CreateMap(CenterX, CenterZ, DEFAULT_SCALE);
+		auto NewMap = a_World->GetMapManager().CreateMap(a_HeldItem.m_ItemDamage, CenterX, CenterZ, DEFAULT_SCALE);
 		if (NewMap == nullptr)
 		{
 			return true;

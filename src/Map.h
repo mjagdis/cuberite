@@ -94,6 +94,13 @@ public:
 
 	// tolua_begin
 
+	enum eEmptyMapType
+	{
+		E_EMPTY_MAP_TYPE_LOCATOR = 0, /* Empty maps from older worlds are always locator maps */
+		E_EMPTY_MAP_TYPE_SIMPLE,
+		E_EMPTY_MAP_TYPE_EXPLORER,
+	};
+
 	enum eBaseColor
 	{
 		E_BASE_COLOR_TRANSPARENT = 0,  /* Air     */
@@ -124,7 +131,7 @@ public:
 	cMap(unsigned int a_ID, cWorld * a_World);
 
 	/** Construct an empty map at the specified coordinates. */
-	cMap(unsigned int a_ID, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale = 3);
+	cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale = 3);
 
 	/** Sends a map update to all registered clients
 	Clears the list holding registered clients and decorators */
