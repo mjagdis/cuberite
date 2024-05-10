@@ -626,21 +626,25 @@ void cSlotAreaCrafting::ClickedResult(cPlayer & a_Player)
 	// If possible, craft:
 	if (DraggingItem.IsEmpty())
 	{
-		DraggingItem = Result;
-		Recipe.ConsumeIngredients(Grid);
-		Grid.CopyToItems(PlayerSlots);
+		if (!Recipe.ConsumeIngredients(a_Player, Grid))
+		{
+			DraggingItem = Result;
+			Grid.CopyToItems(PlayerSlots);
 
-		HandleCraftItem(Result, a_Player);
+			HandleCraftItem(Result, a_Player);
+		}
 	}
 	else if (DraggingItem.IsEqual(Result))
 	{
 		if (DraggingItem.m_ItemCount + Result.m_ItemCount <= Result.GetMaxStackSize())
 		{
-			DraggingItem.m_ItemCount += Result.m_ItemCount;
-			Recipe.ConsumeIngredients(Grid);
-			Grid.CopyToItems(PlayerSlots);
+			if (!Recipe.ConsumeIngredients(a_Player, Grid))
+			{
+				DraggingItem.m_ItemCount += Result.m_ItemCount;
+				Grid.CopyToItems(PlayerSlots);
 
-			HandleCraftItem(Result, a_Player);
+				HandleCraftItem(Result, a_Player);
+			}
 		}
 	}
 
@@ -675,14 +679,18 @@ void cSlotAreaCrafting::ShiftClickedResult(cPlayer & a_Player)
 			return;
 		}
 
+		cCraftingRecipe & Recipe = GetRecipeForPlayer(a_Player);
+		cCraftingGrid Grid(PlayerSlots, m_GridSize, m_GridSize);
+		if (Recipe.ConsumeIngredients(a_Player, Grid))
+		{
+			return;
+		}
+
 		// Distribute the result, this time for real:
 		ResultCopy = Result;
 		m_ParentWindow.DistributeStack(ResultCopy, 0, a_Player, this, true);
 
 		// Remove the ingredients from the crafting grid and update the recipe:
-		cCraftingRecipe & Recipe = GetRecipeForPlayer(a_Player);
-		cCraftingGrid Grid(PlayerSlots, m_GridSize, m_GridSize);
-		Recipe.ConsumeIngredients(Grid);
 		Grid.CopyToItems(PlayerSlots);
 		UpdateRecipe(a_Player);
 
@@ -713,12 +721,14 @@ void cSlotAreaCrafting::DropClickedResult(cPlayer & a_Player)
 	cItem * PlayerSlots = GetPlayerSlots(a_Player) + 1;
 	cCraftingGrid Grid(PlayerSlots, m_GridSize, m_GridSize);
 
-	a_Player.TossPickup(Result);
-	Recipe.ConsumeIngredients(Grid);
-	Grid.CopyToItems(PlayerSlots);
+	if (!Recipe.ConsumeIngredients(a_Player, Grid))
+	{
+		a_Player.TossPickup(Result);
+		Grid.CopyToItems(PlayerSlots);
 
-	HandleCraftItem(Result, a_Player);
-	UpdateRecipe(a_Player);
+		HandleCraftItem(Result, a_Player);
+		UpdateRecipe(a_Player);
+	}
 }
 
 

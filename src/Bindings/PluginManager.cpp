@@ -452,6 +452,19 @@ bool cPluginManager::CallHookCollectingPickup(cPlayer & a_Player, cPickup & a_Pi
 
 
 
+bool cPluginManager::CallHookConsumeIngredients(cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe)
+{
+	return GenericCallHook(HOOK_CONSUME_INGREDIENTS, [&](cPlugin * a_Plugin)
+		{
+			return a_Plugin->OnConsumeIngredients(a_Player, a_Grid, a_Recipe);
+		}
+	);
+}
+
+
+
+
+
 bool cPluginManager::CallHookCraftingNoRecipe(cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe)
 {
 	return GenericCallHook(HOOK_CRAFTING_NO_RECIPE, [&](cPlugin * a_Plugin)

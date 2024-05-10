@@ -90,6 +90,7 @@ public:
 		HOOK_CHUNK_UNLOADED,
 		HOOK_CHUNK_UNLOADING,
 		HOOK_COLLECTING_PICKUP,
+		HOOK_CONSUME_INGREDIENTS,
 		HOOK_CRAFTING_NO_RECIPE,
 		HOOK_DISCONNECT,
 		HOOK_PLAYER_ANIMATION,
@@ -247,6 +248,7 @@ public:
 	bool CallHookChunkUnloaded            (cWorld & a_World, int a_ChunkX, int a_ChunkZ);
 	bool CallHookChunkUnloading           (cWorld & a_World, int a_ChunkX, int a_ChunkZ);
 	bool CallHookCollectingPickup         (cPlayer & a_Player, cPickup & a_Pickup);
+	bool CallHookConsumeIngredients       (cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe);
 	bool CallHookCraftingNoRecipe         (cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe);
 	bool CallHookDisconnect               (cClientHandle & a_Client, const AString & a_Reason);
 	bool CallHookEntityAddEffect          (cEntity & a_Entity, int a_EffectType, int a_EffectDurationTicks, int a_EffectIntensity, double a_DistanceModifier);

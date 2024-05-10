@@ -749,6 +749,10 @@ cPluginManager.AddHook(cPluginManager.HOOK_CHAT, OnChatMessage);
 			{
 				Notes = "Called before a chunk is unloaded from a {{cWorld|world}}. The chunk has already been saved.",
 			},
+			HOOK_CONSUME_INGREDIENTS =
+			{
+				Notes = "Called after a player has clicked to collect a crafted item but before the item is received or ingredients are consumed. The plugin may modify the grid and/or recipe and can cancel the pickup by returning true (doing so will temporarily confuse the client though).",
+			},
 			HOOK_COLLECTING_PICKUP =
 			{
 				Notes = "Called when a player is about to collect a pickup.",

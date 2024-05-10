@@ -85,7 +85,7 @@ public:
 	}
 
 	/** Consumes ingredients from the crafting grid specified */
-	void ConsumeIngredients(cCraftingGrid & a_CraftingGrid);
+	bool ConsumeIngredients(cPlayer & a_Player, cCraftingGrid & a_CraftingGrid);
 
 	/** Dumps the entire recipe using LOGD() */
 	void Dump(void);
