@@ -28,6 +28,10 @@ using cMapCallback = cFunctionRef<bool(cMap &)>;
 class cMapManager
 {
 public:
+	/** Creates a new map with the same contents as an existing map.
+	Returns the new map or nullptr if no more maps can be created. */
+	cMap * CopyMap(cMap & OldMap);
+
 	// tolua_end
 
 	cMapManager(cWorld * a_World);

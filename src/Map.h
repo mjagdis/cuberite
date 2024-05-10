@@ -133,6 +133,9 @@ public:
 	/** Construct an empty map at the specified coordinates. */
 	cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale = 3);
 
+	/** Construct a filled map as a copy of the given map. */
+	cMap(unsigned int a_ID, const cMap & a_Map);
+
 	/** Sends a map update to all registered clients
 	Clears the list holding registered clients and decorators */
 	void Tick();

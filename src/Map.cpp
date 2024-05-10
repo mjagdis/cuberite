@@ -56,6 +56,16 @@ cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWo
 
 
 
+cMap::cMap(unsigned int a_ID, const cMap & a_Map)
+{
+	*this = a_Map;
+	m_ID = a_ID;
+}
+
+
+
+
+
 void cMap::Tick()
 {
 	for (const auto & Client : m_ClientsInCurrentTick)

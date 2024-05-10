@@ -110,6 +110,27 @@ cMap * cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, uns
 
 
 
+cMap * cMapManager::CopyMap(cMap & OldMap)
+{
+	cCSLock Lock(m_CS);
+
+	if (m_MapData.size() >= 65536)
+	{
+		LOGWARN("Could not craft map - Too many maps in use");
+		return nullptr;
+	}
+
+	cMap Map(static_cast<unsigned>(m_MapData.size()), OldMap);
+
+	m_MapData.push_back(Map);
+
+	return &m_MapData[Map.GetID()];
+}
+
+
+
+
+
 void cMapManager::LoadMapData(void)
 {
 	cCSLock Lock(m_CS);
