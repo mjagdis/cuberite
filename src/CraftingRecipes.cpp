@@ -238,9 +238,15 @@ void cCraftingRecipe::SetResult(ENUM_ITEM_TYPE a_ItemType, char a_ItemCount, sho
 
 
 
-void cCraftingRecipe::ConsumeIngredients(cCraftingGrid & a_CraftingGrid)
+bool cCraftingRecipe::ConsumeIngredients(cPlayer & a_Player, cCraftingGrid & a_CraftingGrid)
 {
-	a_CraftingGrid.ConsumeGrid(m_Ingredients);
+	if (!cRoot::Get()->GetPluginManager()->CallHookConsumeIngredients(a_Player, a_CraftingGrid, *this))
+	{
+		a_CraftingGrid.ConsumeGrid(m_Ingredients);
+		return false;
+	}
+
+	return true;
 }
 
 

@@ -347,6 +347,15 @@ bool cPluginLua::OnCollectingPickup(cPlayer & a_Player, cPickup & a_Pickup)
 
 
 
+bool cPluginLua::OnConsumeIngredients(cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe)
+{
+	return CallSimpleHooks(cPluginManager::HOOK_CONSUME_INGREDIENTS, &a_Player, &a_Grid, &a_Recipe);
+}
+
+
+
+
+
 bool cPluginLua::OnCraftingNoRecipe(cPlayer & a_Player, cCraftingGrid & a_Grid, cCraftingRecipe & a_Recipe)
 {
 	return CallSimpleHooks(cPluginManager::HOOK_CRAFTING_NO_RECIPE, &a_Player, &a_Grid, &a_Recipe);
@@ -1093,6 +1102,7 @@ const char * cPluginLua::GetHookFnName(int a_HookType)
 		case cPluginManager::HOOK_CHUNK_UNLOADED:               return "OnChunkUnloaded";
 		case cPluginManager::HOOK_CHUNK_UNLOADING:              return "OnChunkUnloading";
 		case cPluginManager::HOOK_COLLECTING_PICKUP:            return "OnCollectingPickup";
+		case cPluginManager::HOOK_CONSUME_INGREDIENTS:          return "OnConsumeIngredients";
 		case cPluginManager::HOOK_CRAFTING_NO_RECIPE:           return "OnCraftingNoRecipe";
 		case cPluginManager::HOOK_DISCONNECT:                   return "OnDisconnect";
 		case cPluginManager::HOOK_PLAYER_ANIMATION:             return "OnPlayerAnimation";
