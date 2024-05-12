@@ -219,14 +219,39 @@ bool cIDCountSerializer::Load()
 		return false;
 	}
 
-	int CurrLine = NBT.FindChildByName(0, "map");
+	// Older formats didn't have a "data" container
+	int DataSection = NBT.FindChildByName(0, "data");
+	if (DataSection < 0)
+	{
+		DataSection = 0;
+	}
+
+	int CurrLine = NBT.FindChildByName(DataSection, "map");
 	if (CurrLine >= 0)
 	{
-		m_MapCount = static_cast<unsigned int>(NBT.GetShort(CurrLine) + 1);
+		// Older map counts were Shorts, newer are Ints
+		switch (NBT.GetType(CurrLine))
+		{
+			case TAG_Int:
+				m_MapCount = static_cast<unsigned int>(NBT.GetInt(CurrLine) + 1);
+				break;
+
+			case TAG_Short:
+				m_MapCount = static_cast<unsigned int>(NBT.GetShort(CurrLine) + 1);
+				break;
+
+			default:
+			{
+				LOGERROR(fmt::format(FMT_STRING("Unexpected type {} for map count in {}"), NBT.GetType(CurrLine), m_Path));
+				break;
+			}
+		}
 	}
 	else
 	{
+		LOGERROR(fmt::format(FMT_STRING("Don't understand the contents of {}"), m_Path));
 		m_MapCount = 0;
+		return false;
 	}
 
 	return true;
