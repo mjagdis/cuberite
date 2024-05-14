@@ -20,6 +20,7 @@
 
 
 cMapManager::cMapManager(cWorld * a_World) :
+	m_NextID(0),
 	m_World(a_World),
 	m_TicksUntilNextSave(MAP_DATA_SAVE_INTERVAL)
 {
@@ -53,8 +54,11 @@ bool cMapManager::DoWithMap(UInt32 a_ID, cMapCallback a_Callback)
 void cMapManager::TickMaps()
 {
 	cCSLock Lock(m_CS);
-	for (auto & Map : m_MapData)
+
+	for (auto & [MapID, Map] : m_MapData)
 	{
+		UNUSED(MapID);
+
 		Map.Tick();
 	}
 
@@ -75,11 +79,11 @@ void cMapManager::TickMaps()
 
 cMap * cMapManager::GetMapData(unsigned int a_ID)
 {
-	if (a_ID < m_MapData.size())
+	try
 	{
-		return &m_MapData[a_ID];
+		return & m_MapData.at(a_ID);
 	}
-	else
+	catch (const std::out_of_range & ex)
 	{
 		return nullptr;
 	}
@@ -93,38 +97,38 @@ cMap * cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, uns
 {
 	cCSLock Lock(m_CS);
 
-	if (m_MapData.size() >= 65536)
+	unsigned int ID = NextID();
+	auto [it, inserted] = m_MapData.try_emplace(ID, ID, a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
+
+	if (!inserted)
 	{
-		LOGWARN("Could not craft map - Too many maps in use");
+		// Either the IDs wrapped or something went horribly wrong
+		LOGWARN(fmt::format(FMT_STRING("Could not craft map {} - too many maps in use?"), ID));
 		return nullptr;
 	}
 
-	cMap Map(static_cast<unsigned>(m_MapData.size()), a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
-
-	m_MapData.push_back(Map);
-
-	return &m_MapData[Map.GetID()];
+	return &it->second;
 }
 
 
 
 
 
-cMap * cMapManager::CopyMap(cMap & OldMap)
+cMap * cMapManager::CopyMap(cMap & a_OldMap)
 {
 	cCSLock Lock(m_CS);
 
-	if (m_MapData.size() >= 65536)
+	unsigned int ID = NextID();
+	auto [it, inserted] = m_MapData.try_emplace(ID, ID, a_OldMap);
+
+	if (!inserted)
 	{
-		LOGWARN("Could not craft map - Too many maps in use");
+		// Either the IDs wrapped or something went horribly wrong
+		LOGWARN(fmt::format(FMT_STRING("Could not craft map {} - too many maps in use?"), ID));
 		return nullptr;
 	}
 
-	cMap Map(static_cast<unsigned>(m_MapData.size()), OldMap);
-
-	m_MapData.push_back(Map);
-
-	return &m_MapData[Map.GetID()];
+	return &it->second;
 }
 
 
@@ -142,22 +146,19 @@ void cMapManager::LoadMapData(void)
 		return;
 	}
 
-	unsigned int MapCount = IDSerializer.GetMapCount();
+	m_NextID = IDSerializer.GetMapCount();
 
 	m_MapData.clear();
 
-	for (unsigned int i = 0; i < MapCount; ++i)
+	for (unsigned int i = 0; i < m_NextID; ++i)
 	{
-		cMap Map(i, m_World);
+		auto [it, inserted] = m_MapData.try_emplace(i, i, m_World);
 
-		cMapSerializer Serializer(m_World->GetDataPath(), &Map);
+		cMapSerializer Serializer(m_World->GetDataPath(), &it->second);
+		Serializer.Load();
 
-		if (!Serializer.Load())
-		{
-			LOGWARN("Could not load map #%i", Map.GetID());
-		}
-
-		m_MapData.push_back(Map);
+		// A just-loaded map isn't dirty even though we just "changed" it
+		it->second.m_Dirty = false;
 	}
 }
 
@@ -174,32 +175,37 @@ void cMapManager::SaveMapData(void)
 		return;
 	}
 
-	cIDCountSerializer IDSerializer(m_World->GetDataPath());
-
-	IDSerializer.SetMapCount(static_cast<unsigned>(m_MapData.size()));
-
-	if (!IDSerializer.Save())
+	// FIXME: We don't clean up orphaned map saves. This could waste a lot of disk eventually.
+	bool changes = false;
+	for (auto & [MapID, Map] : m_MapData)
 	{
-		LOGERROR("Could not save idcounts.dat");
-		return;
-	}
-
-	for (cMapList::iterator it = m_MapData.begin(); it != m_MapData.end(); ++it)
-	{
-		cMap & Map = *it;
-
 		if (Map.m_Dirty)
 		{
 			cMapSerializer Serializer(m_World->GetDataPath(), &Map);
 
+			Map.m_Dirty = false;
+
 			if (Serializer.Save())
 			{
-				Map.m_Dirty = false;
+				changes = true;
 			}
 			else
 			{
-				LOGWARN("Could not save map #%i", Map.GetID());
+				Map.m_Dirty = true;
+				LOGWARN("Could not save map #%i", MapID);
 			}
+		}
+	}
+
+	if (changes)
+	{
+		cIDCountSerializer IDSerializer(m_World->GetDataPath());
+
+		IDSerializer.SetMapCount(m_NextID);
+
+		if (!IDSerializer.Save())
+		{
+			LOGERROR("Could not save idcounts.dat");
 		}
 	}
 }

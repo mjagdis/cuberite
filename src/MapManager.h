@@ -30,7 +30,7 @@ class cMapManager
 public:
 	/** Creates a new map with the same contents as an existing map.
 	Returns the new map or nullptr if no more maps can be created. */
-	cMap * CopyMap(cMap & OldMap);
+	cMap * CopyMap(cMap & a_OldMap);
 
 	// tolua_end
 
@@ -60,9 +60,11 @@ public:
 
 private:
 
-	typedef std::vector<cMap> cMapList;
+	typedef std::unordered_map<unsigned int, cMap> cMapList;
 
 	cCriticalSection m_CS;
+
+	unsigned int m_NextID;
 
 	cMapList m_MapData;
 
@@ -72,7 +74,7 @@ private:
 	Default save interval is #defined in MAP_DATA_SAVE_INTERVAL */
 	unsigned int m_TicksUntilNextSave;
 
+	/** Allocates and returns a new ID */
+	unsigned int NextID(void) { return m_NextID++; }
+
 };  // tolua_export
-
-
-
