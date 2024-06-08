@@ -73,7 +73,7 @@ void cMap::Tick()
 		Client->SendMapData(*this, 0, 0);
 	}
 	m_ClientsInCurrentTick.clear();
-	m_Decorators.clear();
+	// m_Decorators.clear();
 }
 
 
@@ -85,6 +85,59 @@ void cMap::UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius)
 	if (!m_Locked)
 	{
 		int PixelRadius = static_cast<int>(a_Radius / GetPixelWidth());
+
+		// Scan decorators in this region and remove any non-manual types that
+		// don't exist, are no longer ticking or have moved.
+		for (auto Decorator = m_Decorators.begin(); Decorator != m_Decorators.end();)
+		{
+			// As far as we know everything we know is correct.
+			bool exists = true;
+
+			if (Decorator->m_Type != cMap::DecoratorType::PERSISTENT)
+			{
+				int PixelX = (static_cast<int>(Decorator->m_MapX) - 1) / 2;
+				int PixelZ = (static_cast<int>(Decorator->m_MapZ) - 1) / 2;
+
+				int dX = PixelX - a_PixelX;
+				int dZ = PixelZ - a_PixelZ;
+
+				int BlockX, BlockZ;
+
+				// If it's inside our circle of awareness we'll check it.
+				if ((dX * dX) + (dZ * dZ) < (PixelRadius * PixelRadius))
+				{
+					BlockX = m_CenterX + GetPixelWidth() * PixelX;
+					BlockZ = m_CenterZ + GetPixelWidth() * PixelZ;
+
+					int ChunkX, ChunkZ;
+					cChunkDef::BlockToChunk(BlockX, BlockZ, ChunkX, ChunkZ);
+
+					exists = m_World->DoWithChunk(ChunkX, ChunkZ, [&Decorator](cChunk & a_Chunk)
+						{
+							bool result = false;
+
+							a_Chunk.DoWithEntityByID(Decorator->m_Id, [&Decorator] (cEntity & a_Entity)
+								{
+									return ((Decorator->m_Position == a_Entity.GetPosition()) && (Decorator->m_Yaw == a_Entity.GetYaw()));
+								},
+								result);
+
+							return result;
+						}
+					);
+				}
+			}
+
+			if (exists)
+			{
+				++Decorator;
+			}
+			else
+			{
+				Decorator = m_Decorators.erase(Decorator);
+				m_Dirty = true;
+			}
+		}
 
 		unsigned int StartX = static_cast<unsigned int>(Clamp(a_PixelX - PixelRadius, 0, MAP_WIDTH));
 		unsigned int StartZ = static_cast<unsigned int>(Clamp(a_PixelZ - PixelRadius, 0, MAP_HEIGHT));
@@ -198,7 +251,7 @@ void cMap::UpdateClient(cPlayer * a_Player)
 
 	if (m_TrackingPosition && (m_UnlimitedTracking || GetTrackingDistance(a_Player) <= GetTrackingThreshold() * GetPixelWidth()))
 	{
-		m_Decorators.emplace_back(CreateDecorator(a_Player));
+		AddDecorator(cMap::DecoratorType::PLAYER, cMap::icon::MAP_ICON_PLAYER, a_Player->GetUniqueID(), a_Player->GetPosition(), a_Player->GetYaw());
 	}
 }
 
@@ -276,21 +329,18 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 
 
-const cMapDecorator cMap::CreateDecorator(const cEntity * a_TrackedEntity)
+void cMap::AddDecorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
 {
 	int InsideWidth = (GetWidth() / 2) - 1;
 	int InsideHeight = (GetHeight() / 2) - 1;
 
 	// Center of pixel
-	int PixelX = static_cast<int>(a_TrackedEntity->GetPosX() - GetCenterX()) / static_cast<int>(GetPixelWidth());
-	int PixelZ = static_cast<int>(a_TrackedEntity->GetPosZ() - GetCenterZ()) / static_cast<int>(GetPixelWidth());
-
-	cMapDecorator::eType Type;
-	int Rot;
+	int PixelX = static_cast<int>(a_Position.x - GetCenterX()) / static_cast<int>(GetPixelWidth());
+	int PixelZ = static_cast<int>(a_Position.z - GetCenterZ()) / static_cast<int>(GetPixelWidth());
 
 	if ((PixelX > -InsideWidth) && (PixelX <= InsideWidth) && (PixelZ > -InsideHeight) && (PixelZ <= InsideHeight))
 	{
-		double Yaw = a_TrackedEntity->GetYaw();
+		int Rot;
 
 		if (GetDimension() == dimNether)
 		{
@@ -299,22 +349,18 @@ const cMapDecorator cMap::CreateDecorator(const cEntity * a_TrackedEntity)
 		}
 		else
 		{
-			Rot = CeilC(((Yaw - 11.25) * 16) / 360);
+			Rot = CeilC(((a_Yaw - 11.25) * 16) / 360);
 		}
 
-		Type = cMapDecorator::eType::E_TYPE_PLAYER;
+		m_Decorators.emplace(a_Type, a_Icon, a_Id, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), Rot);
+		m_Dirty = true;
 	}
-	else
+	else if (a_Icon == cMap::icon::MAP_ICON_PLAYER)
 	{
-		Rot = 0;
-
-		if (GetTrackingDistance(a_TrackedEntity) <= (GetWidth() * GetPixelWidth()) / 2 + GetFarTrackingThreshold())
+		a_Icon = cMap::icon::MAP_ICON_PLAYER_FAR_OUTSIDE;
+		if (GetTrackingDistance(a_Position) <= (GetWidth() * GetPixelWidth()) / 2 + GetFarTrackingThreshold())
 		{
-			Type = cMapDecorator::eType::E_TYPE_PLAYER_OUTSIDE;
-		}
-		else
-		{
-			Type = cMapDecorator::eType::E_TYPE_PLAYER_FAR_OUTSIDE;
+			a_Icon = cMap::icon::MAP_ICON_PLAYER_OUTSIDE;
 		}
 
 		// Move to border
@@ -334,9 +380,24 @@ const cMapDecorator cMap::CreateDecorator(const cEntity * a_TrackedEntity)
 		{
 			PixelZ = InsideHeight;
 		}
-	}
 
-	return {Type, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), Rot};
+		m_Decorators.emplace(a_Type, a_Icon, a_Id, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), 0);
+		m_Dirty = true;
+	}
+}
+
+
+
+
+
+void cMap::RemoveDecorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+{
+	auto itr = m_Decorators.find({ a_Type, a_Icon, a_Id, a_Position, a_Yaw, 0, 0, 0 });
+	if (itr != m_Decorators.end())
+	{
+		m_Decorators.erase(itr);
+		m_Dirty = true;
+	}
 }
 
 

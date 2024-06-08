@@ -445,14 +445,14 @@ void cProtocol_1_9_0::SendMapData(const cMap & a_Map, int a_DataStartX, int a_Da
 	cPacketizer Pkt(*this, pktMapData);
 	Pkt.WriteVarInt32(a_Map.GetID());
 	Pkt.WriteBEUInt8(static_cast<UInt8>(a_Map.GetScale()));
-
 	Pkt.WriteBool(a_Map.GetTrackingPosition());
+
 	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
 	for (const auto & Decorator : a_Map.GetDecorators())
 	{
-		Pkt.WriteBEUInt8(static_cast<Byte>((static_cast<Int32>(Decorator.GetType()) << 4) | (Decorator.GetRot() & 0xF)));
-		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.GetPixelX()));
-		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.GetPixelZ()));
+		Pkt.WriteBEUInt8(static_cast<Byte>((static_cast<Int32>(Decorator.m_Type) << 4) | (Decorator.m_Rot & 0xF)));
+		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.m_MapX));
+		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.m_MapZ));
 	}
 
 	Pkt.WriteBEUInt8(a_Map.MAP_WIDTH - a_DataStartX);
