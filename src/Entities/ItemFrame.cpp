@@ -42,6 +42,16 @@ bool cItemFrame::DoTakeDamage(TakeDamageInfo & a_TDI)
 		GetWorld()->SpawnItemPickup(SpawnPosition, m_Item, FlyOutSpeed);
 	}
 
+	if (m_Item.m_ItemType == E_ITEM_MAP)
+	{
+		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [this](cMap & a_Map)
+			{
+				a_Map.RemoveFrame(GetUniqueID(), GetPosition(), GetYaw());
+				return true;
+			}
+		);
+	}
+
 	// In any case we have a held item and were hit by a player, so clear it:
 	m_Item.Empty();
 	m_ItemRotation = 0;
@@ -92,6 +102,16 @@ void cItemFrame::OnRightClicked(cPlayer & a_Player)
 		{
 			a_Player.GetInventory().RemoveOneEquippedItem();
 		}
+	}
+
+	if (m_Item.m_ItemType == E_ITEM_MAP)
+	{
+		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [this](cMap & a_Map)
+			{
+				a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
+				return true;
+			}
+		);
 	}
 
 	GetWorld()->BroadcastEntityMetadata(*this);  // Update clients

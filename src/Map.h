@@ -24,68 +24,99 @@ class cMap;
 
 
 
-/** Encapsulates a map decorator.
-A map decorator represents an object drawn on the map that can move freely.
-(e.g. player trackers and item frame pointers)
-
-Excluding manually placed decorators,
-decorators are automatically managed (allocated and freed) by their parent cMap instance.
-*/
-struct cMapDecorator
-{
-public:
-
-	enum class eType
-	{
-		E_TYPE_PLAYER         = 0x00,
-		E_TYPE_ITEM_FRAME     = 0x01,
-
-		/** Player outside of the boundaries of the map. */
-		E_TYPE_PLAYER_OUTSIDE = 0x06,
-
-		/** Player far outside of the boundaries of the map. */
-		E_TYPE_PLAYER_FAR_OUTSIDE = 0x07,
-	};
-
-	cMapDecorator(eType a_Type, unsigned int a_X, unsigned int a_Z, int a_Rot) :
-		m_Type(a_Type),
-		m_PixelX(a_X),
-		m_PixelZ(a_Z),
-		m_Rot(a_Rot)
-	{
-	}
-
-public:
-
-	unsigned int GetPixelX(void) const { return m_PixelX; }
-	unsigned int GetPixelZ(void) const { return m_PixelZ; }
-
-	int GetRot(void) const { return m_Rot; }
-
-	eType GetType(void) const { return m_Type; }
-
-private:
-
-	eType m_Type;
-
-	unsigned int m_PixelX;
-	unsigned int m_PixelZ;
-
-	int m_Rot;
-
-};
-
-
-
-
-
 // tolua_begin
 
 /** Encapsulates an in-game world map. */
 class cMap
 {
 public:
+	enum class icon
+	{
+		MAP_ICON_PLAYER             = 0,
+		MAP_ICON_GREEN_ARROW        = 1,  ///< Used for item frames.
+		MAP_ICON_RED_ARROW          = 2,
+		MAP_ICON_BLUE_ARROW         = 3,
+		MAP_ICON_WHITE_CROSS        = 4,
+		MAP_ICON_RED_POINTER        = 5,
+		MAP_ICON_PLAYER_OUTSIDE     = 6,  ///< Player outside of the boundaries of the map.
+		MAP_ICON_PLAYER_FAR_OUTSIDE = 7,  ///< Player far outside of the boundaries of the map.
+		MAP_ICON_MANSION            = 8,
+		MAP_ICON_MONUMENT           = 9,
+
+		MAP_ICON_WHITE_BANNER       = 10,
+		MAP_ICON_ORANGE_BANNER      = 11,
+		MAP_ICON_MAGENTA_BANNER     = 12,
+		MAP_ICON_LIGHT_BLUE_BANNER  = 13,
+		MAP_ICON_YELLOW_BANNER      = 14,
+		MAP_ICON_LIME_BANNER        = 15,
+		MAP_ICON_PINK_BANNER        = 16,
+		MAP_ICON_GRAY_BANNER        = 17,
+		MAP_ICON_LIGHT_GRAY_BANNER  = 18,
+		MAP_ICON_CYAN_BANNER        = 19,
+		MAP_ICON_PURPLE_BANNER      = 20,
+		MAP_ICON_BLUE_BANNER        = 21,
+		MAP_ICON_BROWN_BANNER       = 22,
+		MAP_ICON_GREEN_BANNER       = 23,
+		MAP_ICON_RED_BANNER         = 24,
+		MAP_ICON_BLACK_BANNER       = 25,
+		MAP_ICON_TREASURE_MARKER    = 26,
+	};
+
 	// tolua_end
+
+	enum class DecoratorType
+	{
+		PLAYER = 0,
+		FRAME,
+		BANNER,
+		PERSISTENT,
+	};
+
+	/** Encapsulates a map decorator.
+	A map decorator represents an object drawn on the map that can move freely.
+	(e.g. player trackers and item frame pointers)
+
+	Excluding manually placed decorators,
+	decorators are automatically managed (allocated and freed) by their parent cMap instance.
+	*/
+	class Decorator
+	{
+	public:
+
+		Decorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ, int a_Rot) :
+			m_Type(a_Type),
+			m_Icon(a_Icon),
+			m_Id(a_Id),
+			m_Position(a_Position),
+			m_Yaw(a_Yaw),
+			m_MapX(a_MapX),
+			m_MapZ(a_MapZ),
+			m_Rot(a_Rot)
+		{
+		}
+
+		bool operator < (const cMap::Decorator & a_Rhs) const
+		{
+			// FIXME: we should compare rot rather than yaw
+			return (m_Type < a_Rhs.m_Type)
+			|| ((m_Type == a_Rhs.m_Type) && (m_Icon < a_Rhs.m_Icon))
+			|| ((m_Icon == a_Rhs.m_Icon) && (m_Id < a_Rhs.m_Id))
+			|| ((m_Id == a_Rhs.m_Id) && (m_Position < a_Rhs.m_Position))
+			|| ((m_Position == a_Rhs.m_Position) && (m_Yaw < a_Rhs.m_Yaw));
+		}
+
+		const cMap::DecoratorType m_Type;
+		const cMap::icon m_Icon;
+		const UInt32 m_Id;
+
+		const Vector3d m_Position;
+		const int m_Yaw;
+
+		const unsigned int m_MapX;
+		const unsigned int m_MapZ;
+
+		int m_Rot;
+	};
 
 	static const int MAP_WIDTH = 128;
 	static const int MAP_HEIGHT = 128;
@@ -101,6 +132,7 @@ public:
 		E_EMPTY_MAP_TYPE_EXPLORER,
 	};
 
+	/** @deprecated These are exported to Lua but are otherwise unused. */
 	enum eBaseColor
 	{
 		E_BASE_COLOR_TRANSPARENT = 0,  /* Air     */
@@ -125,7 +157,7 @@ public:
 	// tolua_end
 
 	typedef std::vector<cClientHandle *> cMapClientList;
-	typedef std::vector<cMapDecorator> cMapDecoratorList;
+	typedef std::set<cMap::Decorator> cMapDecoratorList;
 
 	/** Construct an empty map. */
 	cMap(unsigned int a_ID, cWorld * a_World);
@@ -217,14 +249,38 @@ public:
 
 	unsigned int GetFarTrackingThreshold(void) const { return m_FarTrackingThreshold; }
 
-	unsigned int GetTrackingDistance(const cEntity * a_TrackedEntity) const
+	unsigned int GetTrackingDistance(const cEntity * a_Entity) const { return GetTrackingDistance(a_Entity->GetPosition()); }
+
+	unsigned int GetTrackingDistance(const Vector3d & a_Position) const
 	{
-		return std::max(abs(a_TrackedEntity->GetPosX() - m_CenterX), abs(a_TrackedEntity->GetPosZ() - m_CenterZ));
+		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
+	}
+
+	void AddDecorator(cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	{
+		AddDecorator(cMap::DecoratorType::PERSISTENT, a_Icon, a_Id, a_Position, a_Yaw);
+	}
+
+	void RemoveDecorator(cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	{
+		RemoveDecorator(cMap::DecoratorType::PERSISTENT, a_Icon, a_Id, a_Position, a_Yaw);
 	}
 
 	// tolua_end
 
-	const cMapDecorator CreateDecorator(const cEntity * a_TrackedEntity);
+	void AddDecorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw);
+
+	void RemoveDecorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw);
+
+	void AddFrame(UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	{
+		AddDecorator(cMap::DecoratorType::FRAME, cMap::icon::MAP_ICON_GREEN_ARROW, a_Id, a_Position, a_Yaw);
+	}
+
+	void RemoveFrame(UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	{
+		RemoveDecorator(cMap::DecoratorType::FRAME, cMap::icon::MAP_ICON_GREEN_ARROW, a_Id, a_Position, a_Yaw);
+	}
 
 	const cMapDecoratorList GetDecorators(void) const { return m_Decorators; }
 
