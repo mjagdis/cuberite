@@ -904,11 +904,11 @@ void cProtocol_1_8_0::SendMapData(const cMap & a_Map, int a_DataStartX, int a_Da
 	Pkt.WriteBEUInt8(static_cast<UInt8>(a_Map.GetScale()));
 
 	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
-	for (const auto & Decorator : a_Map.GetDecorators())
+	for (const auto & itr : a_Map.GetDecorators())
 	{
-		Pkt.WriteBEUInt8(static_cast<Byte>((static_cast<Int32>(Decorator.m_Type) << 4) | (Decorator.m_Rot & 0xF)));
-		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.m_MapX));
-		Pkt.WriteBEUInt8(static_cast<UInt8>(Decorator.m_MapZ));
+		Pkt.WriteBEUInt8(static_cast<Byte>((static_cast<Int32>(itr.second.m_Icon) << 4) | (itr.second.m_CurrentRot & 0xF)));
+		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapX));
+		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
 	}
 
 	Pkt.WriteBEUInt8(a_Map.MAP_WIDTH - a_DataStartX);

@@ -11,6 +11,7 @@
 
 #include "Defines.h"
 #include "ChunkDef.h"
+#include "FastRandom.h"
 
 
 
@@ -82,40 +83,89 @@ public:
 	class Decorator
 	{
 	public:
-
-		Decorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ, int a_Rot) :
-			m_Type(a_Type),
-			m_Icon(a_Icon),
-			m_Id(a_Id),
-			m_Position(a_Position),
-			m_Yaw(a_Yaw),
-			m_MapX(a_MapX),
-			m_MapZ(a_MapZ),
-			m_Rot(a_Rot)
+		class Key
 		{
-		}
+		public:
+			Key(cMap::DecoratorType a_Type, UInt32 a_Id) :
+				m_Type(a_Type),
+				m_Id(a_Id)
+			{
+			}
 
-		bool operator < (const cMap::Decorator & a_Rhs) const
+			bool operator < (const cMap::Decorator::Key & a_Rhs) const
+			{
+				return (m_Type < a_Rhs.m_Type)
+				|| ((m_Type == a_Rhs.m_Type) && (m_Id < a_Rhs.m_Id));
+			}
+
+			const cMap::DecoratorType m_Type;
+			const UInt32 m_Id;
+		};
+
+		class Value
 		{
-			// FIXME: we should compare rot rather than yaw
-			return (m_Type < a_Rhs.m_Type)
-			|| ((m_Type == a_Rhs.m_Type) && (m_Icon < a_Rhs.m_Icon))
-			|| ((m_Icon == a_Rhs.m_Icon) && (m_Id < a_Rhs.m_Id))
-			|| ((m_Id == a_Rhs.m_Id) && (m_Position < a_Rhs.m_Position))
-			|| ((m_Position == a_Rhs.m_Position) && (m_Yaw < a_Rhs.m_Yaw));
-		}
+		private:
+			static char YawToRot(int a_Yaw)
+			{
+				return CeilC(((a_Yaw - 11.25) * 16) / 360);
+			}
 
-		const cMap::DecoratorType m_Type;
-		const cMap::icon m_Icon;
-		const UInt32 m_Id;
+		public:
 
-		const Vector3d m_Position;
-		const int m_Yaw;
+			Value(cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ) :
+				m_Icon(a_Icon),
+				m_Position(a_Position),
+				m_Yaw(a_Yaw),
+				m_MapX(a_MapX),
+				m_MapZ(a_MapZ),
+				m_CurrentRot(YawToRot(a_Yaw)),
+				m_Spin(0),
+				m_SpinTime(0),
+				m_SpinRate(0)
+			{
+			}
 
-		const unsigned int m_MapX;
-		const unsigned int m_MapZ;
+			void Update(cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ, bool a_Spinning)
+			{
+				m_Icon = a_Icon;
+				m_Position = a_Position;
+				m_Yaw = a_Yaw;
+				m_MapX = a_MapX;
+				m_MapZ = a_MapZ;
 
-		int m_Rot;
+				if (!a_Spinning)
+				{
+					m_CurrentRot = YawToRot(a_Yaw);
+				}
+			}
+
+			void Spin(void)
+			{
+				if (m_Icon <= cMap::icon::MAP_ICON_BLUE_ARROW)
+				{
+					if ((m_SpinTime == 0) || (--m_SpinTime == 0))
+					{
+						m_SpinRate = 1 + GetRandomProvider().RandInt(3);
+						m_SpinTime = 8 + GetRandomProvider().RandInt(12) / m_SpinRate;
+						m_SpinRate = (GetRandomProvider().RandInt(1) > 0 ? m_SpinRate : -m_SpinRate);
+					}
+					m_Spin += m_SpinRate;
+					m_CurrentRot = m_Spin / 2;
+				}
+			}
+
+			cMap::icon m_Icon;
+
+			Vector3d m_Position;
+			int m_Yaw;
+
+			unsigned int m_MapX;
+			unsigned int m_MapZ;
+
+			char m_CurrentRot;
+
+			char m_Spin, m_SpinTime, m_SpinRate;
+		};
 	};
 
 	static const int MAP_WIDTH = 128;
@@ -157,7 +207,7 @@ public:
 	// tolua_end
 
 	typedef std::vector<cClientHandle *> cMapClientList;
-	typedef std::set<cMap::Decorator> cMapDecoratorList;
+	typedef std::multimap<Decorator::Key, Decorator::Value> cMapDecoratorList;
 
 	/** Construct an empty map. */
 	cMap(unsigned int a_ID, cWorld * a_World);
@@ -256,30 +306,30 @@ public:
 		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
 	}
 
-	void AddDecorator(cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	void AddDecorator(UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw)
 	{
-		AddDecorator(cMap::DecoratorType::PERSISTENT, a_Icon, a_Id, a_Position, a_Yaw);
+		AddDecorator(cMap::DecoratorType::PERSISTENT, a_Id, a_Icon, a_Position, a_Yaw);
 	}
 
-	void RemoveDecorator(cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	void RemoveDecorator(UInt32 a_Id)
 	{
-		RemoveDecorator(cMap::DecoratorType::PERSISTENT, a_Icon, a_Id, a_Position, a_Yaw);
+		RemoveDecorator(cMap::DecoratorType::PERSISTENT, a_Id);
 	}
 
 	// tolua_end
 
-	void AddDecorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw);
+	void AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw);
 
-	void RemoveDecorator(cMap::DecoratorType a_Type, cMap::icon a_Icon, UInt32 a_Id, const Vector3d & a_Position, int a_Yaw);
+	void RemoveDecorator(cMap::DecoratorType a_Type, UInt32 a_Id);
 
 	void AddFrame(UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
 	{
-		AddDecorator(cMap::DecoratorType::FRAME, cMap::icon::MAP_ICON_GREEN_ARROW, a_Id, a_Position, a_Yaw);
+		AddDecorator(cMap::DecoratorType::FRAME, a_Id, cMap::icon::MAP_ICON_GREEN_ARROW, a_Position, a_Yaw);
 	}
 
-	void RemoveFrame(UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	void RemoveFrame(UInt32 a_Id)
 	{
-		RemoveDecorator(cMap::DecoratorType::FRAME, cMap::icon::MAP_ICON_GREEN_ARROW, a_Id, a_Position, a_Yaw);
+		RemoveDecorator(cMap::DecoratorType::FRAME, a_Id);
 	}
 
 	const cMapDecoratorList GetDecorators(void) const { return m_Decorators; }
