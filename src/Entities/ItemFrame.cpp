@@ -130,10 +130,16 @@ void cItemFrame::SpawnOn(cClientHandle & a_ClientHandle)
 
 	if (m_Item.m_ItemType == E_ITEM_MAP)
 	{
-		cMap * Map = GetWorld()->GetMapManager().GetMapData(static_cast<unsigned>(m_Item.m_ItemDamage));
-		if (Map != nullptr)
-		{
-			a_ClientHandle.SendMapData(*Map, 0, 0);
-		}
+		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [this](cMap & a_Map)
+			{
+				// Make sure the player marker exists on the map. Before Minecraft Java 1.13
+				// saved map files didn't contain decorators.
+				a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
+
+				// Send the full map to the client.
+				a_ClientHandle.SendMapData(a_Map, 0, 0);
+				return true;
+			}
+		);
 	}
 }
