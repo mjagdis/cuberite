@@ -46,7 +46,7 @@ bool cItemFrame::DoTakeDamage(TakeDamageInfo & a_TDI)
 	{
 		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [this](cMap & a_Map)
 			{
-				a_Map.RemoveFrame(GetUniqueID(), GetPosition(), GetYaw());
+				a_Map.RemoveFrame(GetUniqueID());
 				return true;
 			}
 		);

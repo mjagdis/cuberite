@@ -89,6 +89,35 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 	a_Writer.AddInt("xCenter", m_Map->GetCenterX());
 	a_Writer.AddInt("zCenter", m_Map->GetCenterZ());
 
+	// Minecraft Java prior to 1.13 does not save decorations to the map files.
+	// From 1.13 onwards it writes separate "frames" and "banners" lists each with
+	// slightly different formats.
+	a_Writer.BeginList("frames", TAG_Compound);
+	for (const auto & itr : m_Map->GetDecorators())
+	{
+		if (itr.first.m_Type != cMap::DecoratorType::PLAYER)
+		{
+			a_Writer.BeginCompound("");
+
+			a_Writer.AddInt("EntityId", itr.first.m_Id);
+			a_Writer.AddInt("Rotation", itr.second.m_Yaw);
+
+			a_Writer.BeginCompound("Pos");
+				a_Writer.AddInt("X", itr.second.m_Position.x);
+				a_Writer.AddInt("Y", itr.second.m_Position.y);
+				a_Writer.AddInt("Z", itr.second.m_Position.z);
+			a_Writer.EndCompound();
+
+			// Cuberite also has non-item frame decorators that may have been added
+			// by plugins. We need to save type and icon for those.
+			a_Writer.AddByte("Type", static_cast<unsigned char>(itr.first.m_Type));
+			a_Writer.AddByte("Icon", static_cast<unsigned char>(itr.second.m_Icon));
+
+			a_Writer.EndCompound();
+		}
+	}
+	a_Writer.EndList();
+
 	a_Writer.AddByteArray("colors", reinterpret_cast<const char *>(m_Map->m_Data), m_Map->GetNumPixels());
 
 	a_Writer.EndCompound();
@@ -168,6 +197,107 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 	{
 		int CenterZ = a_NBT.GetInt(CurrLine);
 		m_Map->m_CenterZ = CenterZ;
+	}
+
+	// Only Minecraft Java from 1.13 onwards has decorations in the map file. With map files
+	// from earlier versions frames will only appear after the chunk they are in has loaded
+	// and they are spawned.
+	int Frames = a_NBT.FindChildByName(Data, "frames");
+	if ((Frames >= 0) && (a_NBT.GetType(Frames) == TAG_List))
+	{
+		for (int Frame = a_NBT.GetFirstChild(Frames); Frame >= 0; Frame = a_NBT.GetNextSibling(Frame))
+		{
+			cMap::DecoratorType Type = cMap::DecoratorType::FRAME;
+			cMap::icon Icon = cMap::icon::MAP_ICON_GREEN_ARROW;
+			Vector3d Position;
+			int EntityId = 0, Yaw = 0;
+
+			// The decoration structure changed somewhat arbitrarily (IMHO) in 1.20.
+			// Cuberite currently saves using the pre-1.20 style.
+			CurrLine = a_NBT.FindChildByName(Frame, "EntityId");
+			if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+			{
+				// Pre-1.20
+				EntityId = a_NBT.GetInt(CurrLine);
+
+				CurrLine = a_NBT.FindChildByName(Frame, "Rotation");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+				{
+					Yaw = a_NBT.GetInt(CurrLine);
+				}
+
+				int Pos = a_NBT.FindChildByName(Frame, "Pos");
+				if ((Pos >= 0) && (a_NBT.GetType(Pos) == TAG_Compound))
+				{
+					CurrLine = a_NBT.FindChildByName(Pos, "X");
+					if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+					{
+						Position.x = a_NBT.GetInt(CurrLine);
+					}
+
+					CurrLine = a_NBT.FindChildByName(Pos, "Y");
+					if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+					{
+						Position.y = a_NBT.GetInt(CurrLine);
+					}
+
+					CurrLine = a_NBT.FindChildByName(Pos, "Z");
+					if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+					{
+						Position.z = a_NBT.GetInt(CurrLine);
+					}
+				}
+			}
+			else
+			{
+				CurrLine = a_NBT.FindChildByName(Frame, "entity_id");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+				{
+					// Post-1.20
+					EntityId = a_NBT.GetInt(CurrLine);
+
+					CurrLine = a_NBT.FindChildByName(Frame, "rotation");
+					if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+					{
+						Yaw = a_NBT.GetInt(CurrLine);
+					}
+
+					int Pos = a_NBT.FindChildByName(Frame, "pos");
+					if ((Pos >= 0) && (a_NBT.GetType(Pos) == TAG_IntArray))
+					{
+						size_t PosLength = a_NBT.GetDataLength(Pos);
+						if (PosLength == 12)
+						{
+							const auto * PosData = (a_NBT.GetData(Pos));
+							Position.x = GetBEInt(PosData + 0);
+							Position.y = GetBEInt(PosData + 4);
+							Position.z = GetBEInt(PosData + 8);
+						}
+					}
+				}
+				else
+				{
+					// Well, I don't know what to make of this...
+					continue;
+				}
+			}
+
+			// Cuberite also has non-item frame decorators that may have been added
+			// by plugins. We will have type and icon for those.
+			CurrLine = a_NBT.FindChildByName(Frame, "Type");
+			if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
+			{
+				Type = static_cast<cMap::DecoratorType>(a_NBT.GetByte(CurrLine));
+			}
+
+			CurrLine = a_NBT.FindChildByName(Frame, "Icon");
+			if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
+			{
+				Icon = static_cast<cMap::icon>(a_NBT.GetByte(CurrLine));
+			}
+
+			m_Map->AddDecorator(Type, EntityId, Icon, Position, Yaw);
+		}
 	}
 
 	CurrLine = a_NBT.FindChildByName(Data, "colors");
