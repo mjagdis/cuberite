@@ -137,7 +137,7 @@ void cItemFrame::SpawnOn(cClientHandle & a_ClientHandle)
 				a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
 
 				// Send the full map to the client.
-				a_ClientHandle.SendMapData(a_Map, 0, 0);
+				a_Map.SendCompleteMapData(a_ClientHandle);
 				return true;
 			}
 		);

@@ -49,7 +49,7 @@ public:
 	virtual void SendExperienceOrb        (const cExpOrb & a_ExpOrb) override;
 	virtual void SendKeepAlive            (UInt32 a_PingID) override;
 	virtual void SendLeashEntity          (const cEntity & a_Entity, const cEntity & a_EntityLeashedTo) override;
-	virtual void SendMapData              (const cMap & a_Map, int a_DataStartX, int a_DataStartY) override;
+	virtual void SendMapData              (const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY) override;
 	virtual void SendPaintingSpawn        (const cPainting & a_Painting) override;
 	virtual void SendPlayerMoveLook       (Vector3d a_Pos, float a_Yaw, float a_Pitch, bool a_IsRelative) override;
 	virtual void SendPlayerMoveLook       (void) override;

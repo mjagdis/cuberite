@@ -22,6 +22,11 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_CenterX(0),
 	m_CenterZ(0),
 	m_Dirty(false),  // This constructor is for an empty map object which will be filled by the caller with the correct values - it does not need saving.
+	m_Send(false),
+	m_ChangeStartX(MAP_WIDTH - 1),
+	m_ChangeEndX(0),
+	m_ChangeStartZ(MAP_HEIGHT - 1),
+	m_ChangeEndZ(0),
 	m_Locked(false),
 	m_TrackingPosition(true),
 	m_UnlimitedTracking(false),
@@ -42,6 +47,11 @@ cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWo
 	m_CenterX(a_CenterX),
 	m_CenterZ(a_CenterZ),
 	m_Dirty(true),  // This constructor is for creating a brand new map in game, it will always need saving.
+	m_Send(true),
+	m_ChangeStartX(MAP_WIDTH - 1),
+	m_ChangeEndX(0),
+	m_ChangeStartZ(MAP_HEIGHT - 1),
+	m_ChangeEndZ(0),
 	m_Locked(false),
 	m_TrackingPosition(a_MapType == E_EMPTY_MAP_TYPE_SIMPLE ? false : true),
 	m_UnlimitedTracking(a_MapType == E_EMPTY_MAP_TYPE_EXPLORER ? true : false),
@@ -60,6 +70,21 @@ cMap::cMap(unsigned int a_ID, const cMap & a_Map)
 {
 	*this = a_Map;
 	m_ID = a_ID;
+	m_Dirty = true;
+	m_Send = true;
+	m_ChangeStartX = 0;
+	m_ChangeEndX = MAP_WIDTH - 1;
+	m_ChangeStartZ = 0;
+	m_ChangeEndZ = MAP_HEIGHT - 1;
+}
+
+
+
+
+
+void cMap::SendCompleteMapData(cClientHandle & a_ClientHandle) const
+{
+	a_ClientHandle.SendMapData(*this, 0, 0, MAP_WIDTH - 1, MAP_HEIGHT - 1);
 }
 
 
@@ -104,14 +129,52 @@ void cMap::Tick()
 		}
 	}
 
-	// FIXME: we should only send changes here. Full maps should be sent when spawning
-	// item frames and when equipping a map item. Or whenever we add a client to the
-	// current tick that wasn't in the previous tick.
-	for (const auto & Client : m_ClientsInCurrentTick)
+	// We only send changes here. Full maps should be sent when spawning item
+	// frames and when equipping a map item. Or whenever we add a client to the
+	// current tick that wasn't in the previous tick?
+	if (m_Send)
 	{
-		Client->SendMapData(*this, 0, 0);
+		for (const auto & Client : m_ClientsInCurrentTick)
+		{
+			Client->SendMapData(*this, m_ChangeStartX, m_ChangeStartZ, m_ChangeEndX, m_ChangeEndZ);
+		}
+
+		m_ChangeStartX = MAP_WIDTH - 1;
+		m_ChangeEndX = 0;
+		m_ChangeStartZ = MAP_HEIGHT - 1;
+		m_ChangeEndZ = 0;
+
+		m_Send = false;
 	}
+
 	m_ClientsInCurrentTick.clear();
+}
+
+
+
+
+
+bool cMap::SetPixel(UInt8 a_X, UInt8 a_Z, ColorID a_Data)
+{
+	if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
+	{
+		auto index = a_Z * MAP_WIDTH + a_X;
+
+		if (m_Data[index] != a_Data)
+		{
+			m_Data[index] = a_Data;
+
+			m_Dirty = true;
+			m_Send = true;
+			m_ChangeStartX = std::min(a_X, m_ChangeStartX);
+			m_ChangeEndX = std::max(a_X, m_ChangeEndX);
+			m_ChangeStartZ = std::min(a_Z, m_ChangeStartZ);
+			m_ChangeEndZ = std::max(a_Z, m_ChangeEndZ);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -178,18 +241,19 @@ void cMap::UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius)
 				// LOG(fmt::format(FMT_STRING("remove decorator type={} id={} icon={} position={} yaw={}"), itr->first.m_Type, itr->first.m_Id, itr->second.m_Icon, itr->second.m_Position, itr->second.m_Yaw));
 				itr = m_Decorators.erase(itr);
 				m_Dirty = true;
+				m_Send = true;
 			}
 		}
 
-		unsigned int StartX = static_cast<unsigned int>(Clamp(a_PixelX - PixelRadius, 0, MAP_WIDTH));
-		unsigned int StartZ = static_cast<unsigned int>(Clamp(a_PixelZ - PixelRadius, 0, MAP_HEIGHT));
+		UInt8 StartX = static_cast<UInt8>(Clamp(a_PixelX - PixelRadius, 0, MAP_WIDTH));
+		UInt8 StartZ = static_cast<UInt8>(Clamp(a_PixelZ - PixelRadius, 0, MAP_HEIGHT));
 
-		unsigned int EndX   = static_cast<unsigned int>(Clamp(a_PixelX + PixelRadius, 0, MAP_WIDTH));
-		unsigned int EndZ   = static_cast<unsigned int>(Clamp(a_PixelZ + PixelRadius, 0, MAP_HEIGHT));
+		UInt8 EndX   = static_cast<UInt8>(Clamp(a_PixelX + PixelRadius, 0, MAP_WIDTH));
+		UInt8 EndZ   = static_cast<UInt8>(Clamp(a_PixelZ + PixelRadius, 0, MAP_HEIGHT));
 
-		for (unsigned int X = StartX; X < EndX; ++X)
+		for (UInt8 X = StartX; X < EndX; ++X)
 		{
-			for (unsigned int Z = StartZ; Z < EndZ; ++Z)
+			for (UInt8 Z = StartZ; Z < EndZ; ++Z)
 			{
 				int dX = static_cast<int>(X) - a_PixelX;
 				int dZ = static_cast<int>(Z) - a_PixelZ;
@@ -221,7 +285,7 @@ void cMap::UpdateRadius(cPlayer & a_Player, unsigned int a_Radius)
 
 
 
-bool cMap::UpdatePixel(unsigned int a_X, unsigned int a_Z)
+bool cMap::UpdatePixel(UInt8 a_X, UInt8 a_Z)
 {
 	int BlockX = m_CenterX + (static_cast<int>(a_X) - MAP_WIDTH  / 2) * GetPixelWidth();
 	int BlockZ = m_CenterZ + (static_cast<int>(a_Z) - MAP_HEIGHT / 2) * GetPixelWidth();
@@ -294,6 +358,10 @@ void cMap::UpdateClient(cPlayer * a_Player)
 	if (m_TrackingPosition && (m_UnlimitedTracking || GetTrackingDistance(a_Player) <= GetTrackingThreshold() * GetPixelWidth()))
 	{
 		AddDecorator(cMap::DecoratorType::PLAYER, a_Player->GetUniqueID(), cMap::icon::MAP_ICON_PLAYER, a_Player->GetPosition(), a_Player->GetYaw());
+	}
+	else
+	{
+		RemoveDecorator(cMap::DecoratorType::PLAYER, a_Player->GetUniqueID());
 	}
 }
 
@@ -387,8 +455,8 @@ void cMap::AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Ic
 			auto itr = m_Decorators.find({ a_Type, a_Id });
 			if (itr != m_Decorators.end())
 			{
-				itr->second.Update(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), (GetDimension() == dimNether));
-				m_Dirty = true;
+				m_Dirty |= (a_Position != itr->second.m_Position) || (a_Yaw != itr->second.m_Yaw) || (a_Icon != itr->second.m_Icon);
+				m_Send |= itr->second.Update(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), (GetDimension() == dimNether));
 				return;
 			}
 		}
@@ -397,6 +465,7 @@ void cMap::AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Ic
 			std::forward_as_tuple(a_Type, a_Id),
 			std::forward_as_tuple(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1)));
 		m_Dirty = true;
+		m_Send = true;
 	}
 	else if (a_Type == cMap::DecoratorType::PLAYER)
 	{
@@ -427,8 +496,8 @@ void cMap::AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Ic
 		auto itr = m_Decorators.find({ a_Type, a_Id });
 		if (itr != m_Decorators.end())
 		{
-			itr->second.Update(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), (GetDimension() == dimNether));
-			m_Dirty = true;
+			m_Dirty |= (a_Position != itr->second.m_Position) || (a_Yaw != itr->second.m_Yaw) || (a_Icon != itr->second.m_Icon);
+			m_Send |= itr->second.Update(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), (GetDimension() == dimNether));
 			return;
 		}
 
@@ -436,6 +505,7 @@ void cMap::AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Ic
 			std::forward_as_tuple(a_Type, a_Id),
 			std::forward_as_tuple(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1)));
 		m_Dirty = true;
+		m_Send = true;
 	}
 }
 
@@ -447,6 +517,7 @@ void cMap::RemoveDecorator(cMap::DecoratorType a_Type, UInt32 a_Id)
 {
 	m_Decorators.erase({ a_Type, a_Id });
 	m_Dirty = true;
+	m_Send = true;
 }
 
 

@@ -37,7 +37,7 @@ protected:
 	virtual void SendEntityAnimation            (const cEntity & a_Entity, EntityAnimation a_Animation) override;
 	virtual void SendEntitySpawn                (const cEntity & a_Entity, const UInt8 a_ObjectType, const Int32 a_ObjectData) override;
 	virtual void SendLogin                      (const cPlayer & a_Player, const cWorld & a_World) override;
-	virtual void SendMapData                    (const cMap & a_Map, int a_DataStartX, int a_DataStartY) override;
+	virtual void SendMapData                    (const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY) override;
 	virtual void SendPaintingSpawn              (const cPainting & a_Painting) override;
 	virtual void SendParticleEffect             (const AString & a_ParticleName, Vector3f a_Src, Vector3f a_Offset, float a_ParticleData, int a_ParticleAmount, std::array<int, 2> a_Data) override;
 	virtual void SendRespawn                    (eDimension a_Dimension) override;

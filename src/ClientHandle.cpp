@@ -2745,9 +2745,9 @@ void cClientHandle::SendInventorySlot(char a_WindowID, short a_SlotNum, const cI
 
 
 
-void cClientHandle::SendMapData(const cMap & a_Map, int a_DataStartX, int a_DataStartY)
+void cClientHandle::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY)
 {
-	m_Protocol->SendMapData(a_Map, a_DataStartX, a_DataStartY);
+	m_Protocol->SendMapData(a_Map, a_DataStartX, a_DataStartY, a_DataEndX, a_DataEndY);
 }
 
 
