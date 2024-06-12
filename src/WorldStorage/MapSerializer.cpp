@@ -301,7 +301,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 	}
 
 	CurrLine = a_NBT.FindChildByName(Data, "colors");
-	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_ByteArray))
+	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_ByteArray) && (a_NBT.GetDataLength(CurrLine) == m_Map->GetNumPixels()))
 	{
 		const Byte * data = reinterpret_cast<const Byte *>(a_NBT.GetData(CurrLine));
 		for (unsigned int y = 0; y < m_Map->MAP_HEIGHT; y++)
