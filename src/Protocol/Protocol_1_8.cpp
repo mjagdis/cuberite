@@ -895,7 +895,7 @@ void cProtocol_1_8_0::SendPaintingSpawn(const cPainting & a_Painting)
 
 
 
-void cProtocol_1_8_0::SendMapData(const cMap & a_Map, int a_DataStartX, int a_DataStartY)
+void cProtocol_1_8_0::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY)
 {
 	ASSERT(m_State == 3);  // In game mode?
 
@@ -911,19 +911,26 @@ void cProtocol_1_8_0::SendMapData(const cMap & a_Map, int a_DataStartX, int a_Da
 		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
 	}
 
-	Pkt.WriteBEUInt8(a_Map.MAP_WIDTH - a_DataStartX);
-	Pkt.WriteBEUInt8(a_Map.MAP_HEIGHT - a_DataStartY);
-	Pkt.WriteBEUInt8(static_cast<UInt8>(a_DataStartX));
-	Pkt.WriteBEUInt8(static_cast<UInt8>(a_DataStartY));
-
-	unsigned int count = (a_Map.MAP_WIDTH - a_DataStartX) * (a_Map.MAP_HEIGHT - a_DataStartY);
-	Pkt.WriteVarInt32(static_cast<UInt32>(count));
-
-	for (unsigned int y = a_DataStartY; y < a_Map.MAP_HEIGHT; y++)
+	if (a_DataEndX < a_DataStartX)
 	{
-		for (unsigned int x = a_DataStartX; x < a_Map.MAP_WIDTH; x++)
+		Pkt.WriteBEUInt8(0);
+	}
+	else
+	{
+		Pkt.WriteBEUInt8(a_DataEndX - a_DataStartX + 1);
+		Pkt.WriteBEUInt8(a_DataEndY - a_DataStartY + 1);
+		Pkt.WriteBEUInt8(a_DataStartX);
+		Pkt.WriteBEUInt8(a_DataStartY);
+
+		UInt32 count = (a_DataEndX - a_DataStartX + 1) * (a_DataEndY - a_DataStartY + 1);
+		Pkt.WriteVarInt32(count);
+
+		for (UInt8 y = a_DataStartY; y <= a_DataEndY; y++)
 		{
-			Pkt.WriteBEUInt8(a_Map.GetPixel(x, y));
+			for (UInt8 x = a_DataStartX; x <= a_DataEndX; x++)
+			{
+				Pkt.WriteBEUInt8(a_Map.GetPixel(x, y));
+			}
 		}
 	}
 }

@@ -125,18 +125,25 @@ public:
 			{
 			}
 
-			void Update(cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ, bool a_Spinning)
+			bool Update(cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ, bool a_Spinning)
 			{
+				char Rot = m_CurrentRot;
+
+				if (!a_Spinning)
+				{
+					Rot = YawToRot(a_Yaw);
+				}
+
+				bool Send = ((a_MapX != m_MapX) || (a_MapZ != m_MapZ) || (Rot != m_CurrentRot) || (a_Icon != m_Icon));
+
 				m_Icon = a_Icon;
 				m_Position = a_Position;
 				m_Yaw = a_Yaw;
 				m_MapX = a_MapX;
 				m_MapZ = a_MapZ;
+				m_CurrentRot = Rot;
 
-				if (!a_Spinning)
-				{
-					m_CurrentRot = YawToRot(a_Yaw);
-				}
+				return Send;
 			}
 
 			void Spin(void)
@@ -170,6 +177,7 @@ public:
 
 	static const int MAP_WIDTH = 128;
 	static const int MAP_HEIGHT = 128;
+	static const int DEFAULT_RADIUS = 128;
 	static const unsigned int DEFAULT_TRACKING_DISTANCE = 320;
 	static const unsigned int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
 
@@ -218,6 +226,9 @@ public:
 	/** Construct a filled map as a copy of the given map. */
 	cMap(unsigned int a_ID, const cMap & a_Map);
 
+	/** Send the complete map data to the specified client. */
+	void SendCompleteMapData(cClientHandle & a_ClientHandle) const;
+
 	/** Sends a map update to all registered clients
 	Clears the list holding registered clients and decorators */
 	void Tick();
@@ -247,24 +258,9 @@ public:
 
 	void SetFarTrackingThreshold(unsigned int a_Threshold);
 
-	bool SetPixel(unsigned int a_X, unsigned int a_Z, ColorID a_Data)
-	{
-		if ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT))
-		{
-			auto index = a_Z * MAP_WIDTH + a_X;
+	bool SetPixel(UInt8 a_X, UInt8 a_Z, ColorID a_Data);
 
-			m_Dirty |= (m_Data[index] != a_Data);
-			m_Data[index] = a_Data;
-
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	ColorID GetPixel(unsigned int a_X, unsigned int a_Z) const
+	ColorID GetPixel(UInt8 a_X, UInt8 a_Z) const
 	{
 		return ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT)) ? m_Data[a_Z * MAP_WIDTH + a_X] : 0;
 	}
@@ -337,7 +333,7 @@ public:
 private:
 
 	/** Update the specified pixel. */
-	bool UpdatePixel(unsigned int a_X, unsigned int a_Z);
+	bool UpdatePixel(UInt8 a_X, UInt8 a_Z);
 
 	unsigned int m_ID;
 
@@ -347,7 +343,13 @@ private:
 	int m_CenterX;
 	int m_CenterZ;
 
+	/** Indicates that the map has changes that need to be saved. */
 	bool m_Dirty;
+
+	/** Indicates that the map has changes that need to be sent to clients. */
+	bool m_Send;
+
+	UInt8 m_ChangeStartX, m_ChangeEndX, m_ChangeStartZ, m_ChangeEndZ;
 
 	bool m_Locked;
 	bool m_TrackingPosition;

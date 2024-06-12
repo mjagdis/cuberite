@@ -179,7 +179,7 @@ void cProtocol_1_14::SendLogin(const cPlayer & a_Player, const cWorld & a_World)
 
 
 
-void cProtocol_1_14::SendMapData(const cMap & a_Map, int a_DataStartX, int a_DataStartY)
+void cProtocol_1_14::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY)
 {
 }
 

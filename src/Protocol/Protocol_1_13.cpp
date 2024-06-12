@@ -76,7 +76,7 @@ void cProtocol_1_13::SendBlockChanges(int a_ChunkX, int a_ChunkZ, const sSetBloc
 
 
 
-void cProtocol_1_13::SendMapData(const cMap & a_Map, int a_DataStartX, int a_DataStartY)
+void cProtocol_1_13::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY)
 {
 	// TODO
 }

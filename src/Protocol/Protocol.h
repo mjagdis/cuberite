@@ -411,7 +411,7 @@ public:
 	virtual void SendLeashEntity                (const cEntity & a_Entity, const cEntity & a_EntityLeashedTo) = 0;
 	virtual void SendLogin                      (const cPlayer & a_Player, const cWorld & a_World) = 0;
 	virtual void SendLoginSuccess               (void) = 0;
-	virtual void SendMapData                    (const cMap & a_Map, int a_DataStartX, int a_DataStartY) = 0;
+	virtual void SendMapData                    (const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY) = 0;
 	virtual void SendPaintingSpawn              (const cPainting & a_Painting) = 0;
 	virtual void SendPlayerAbilities            (void) = 0;
 	virtual void SendParticleEffect             (const AString & a_SoundName, Vector3f a_Src, Vector3f a_Offset, float a_ParticleData, int a_ParticleAmount) = 0;
