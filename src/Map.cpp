@@ -441,34 +441,22 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 void cMap::AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw)
 {
-	int InsideWidth = (GetWidth() / 2) - 1;
-	int InsideHeight = (GetHeight() / 2) - 1;
+	int InsideWidth = ((MAP_WIDTH / 2) - 1);
+	int InsideHeight = ((MAP_HEIGHT / 2) - 1);
 
 	// Center of pixel
 	int PixelX = static_cast<int>(a_Position.x - GetCenterX()) / static_cast<int>(GetPixelWidth());
 	int PixelZ = static_cast<int>(a_Position.z - GetCenterZ()) / static_cast<int>(GetPixelWidth());
 
-	if ((PixelX > -InsideWidth) && (PixelX <= InsideWidth) && (PixelZ > -InsideHeight) && (PixelZ <= InsideHeight))
+	if ((PixelX <= -InsideWidth) || (PixelX > InsideWidth) || (PixelZ <= -InsideHeight) || (PixelZ > InsideHeight))
 	{
-		if ((a_Type == cMap::DecoratorType::PLAYER) || (a_Type == cMap::DecoratorType::PERSISTENT))
+		// No decorators outside the map boundaries except for players which can be
+		// clipped to the edges and represented by "outside" and "far outside" icons.
+		if (a_Type != cMap::DecoratorType::PLAYER)
 		{
-			auto itr = m_Decorators.find({ a_Type, a_Id });
-			if (itr != m_Decorators.end())
-			{
-				m_Dirty |= (a_Position != itr->second.m_Position) || (a_Yaw != itr->second.m_Yaw) || (a_Icon != itr->second.m_Icon);
-				m_Send |= itr->second.Update(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), (GetDimension() == dimNether));
-				return;
-			}
+			return;
 		}
 
-		m_Decorators.emplace(std::piecewise_construct,
-			std::forward_as_tuple(a_Type, a_Id),
-			std::forward_as_tuple(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1)));
-		m_Dirty = true;
-		m_Send = true;
-	}
-	else if (a_Type == cMap::DecoratorType::PLAYER)
-	{
 		a_Icon = cMap::icon::MAP_ICON_PLAYER_FAR_OUTSIDE;
 		if (GetTrackingDistance(a_Position) <= (GetWidth() * GetPixelWidth()) / 2 + GetFarTrackingThreshold())
 		{
@@ -476,37 +464,37 @@ void cMap::AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Ic
 		}
 
 		// Move to border
-		if (PixelX <= -InsideWidth)
-		{
-			PixelX = -InsideWidth;
-		}
-		if (PixelZ <= -InsideHeight)
-		{
-			PixelZ = -InsideHeight;
-		}
-		if (PixelX > InsideWidth)
-		{
-			PixelX = InsideWidth;
-		}
-		if (PixelZ > InsideHeight)
-		{
-			PixelZ = InsideHeight;
-		}
+		PixelX = std::clamp(PixelX, -InsideWidth, InsideWidth);
+		PixelZ = std::clamp(PixelZ, -InsideHeight, InsideHeight);
+	}
 
+	unsigned int MapX = static_cast<unsigned int>(2 * PixelX + 1);
+	unsigned int MapZ = static_cast<unsigned int>(2 * PixelZ + 1);
+
+	// Players and persistent (placed by plugins) markers are movable. Others (item frames
+	// and banners) are simply added and only removed when a region redraw notes that they
+	// are no longer present.
+	if ((a_Type == cMap::DecoratorType::PLAYER) || (a_Type == cMap::DecoratorType::PERSISTENT))
+	{
 		auto itr = m_Decorators.find({ a_Type, a_Id });
 		if (itr != m_Decorators.end())
 		{
+			// The map needs SAVING if there are changes to the entity being represented.
 			m_Dirty |= (a_Position != itr->second.m_Position) || (a_Yaw != itr->second.m_Yaw) || (a_Icon != itr->second.m_Icon);
-			m_Send |= itr->second.Update(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1), (GetDimension() == dimNether));
+
+			// The map needs SENDING if there are changes to the decorator's representation on the map.
+			m_Send |= itr->second.Update(a_Icon, a_Position, a_Yaw, MapX, MapZ, (GetDimension() == dimNether));
 			return;
 		}
-
-		m_Decorators.emplace(std::piecewise_construct,
-			std::forward_as_tuple(a_Type, a_Id),
-			std::forward_as_tuple(a_Icon, a_Position, a_Yaw, static_cast<unsigned>(2 * PixelX + 1), static_cast<unsigned>(2 * PixelZ + 1)));
-		m_Dirty = true;
-		m_Send = true;
 	}
+
+	m_Decorators.emplace(std::piecewise_construct,
+		std::forward_as_tuple(a_Type, a_Id),
+		std::forward_as_tuple(a_Icon, a_Position, a_Yaw, MapX, MapZ));
+
+	// If we placed a new decorator the map needs both saving and sending.
+	m_Dirty = true;
+	m_Send = true;
 }
 
 
