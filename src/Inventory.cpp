@@ -685,10 +685,18 @@ bool cInventory::AddToBar(cItem & a_Item, const int a_Offset, const int a_Size, 
 
 void cInventory::UpdateItems(void)
 {
-	const cItem & Slot = GetEquippedItem();
-	if (!Slot.IsEmpty())
+	// The main inventory:
+	for (int i = 0; i < invInventoryCount; i++)
 	{
-		Slot.GetHandler().OnUpdate(m_Owner.GetWorld(), &m_Owner, Slot);
+		const cItem & Slot = m_InventorySlots.GetSlot(i);
+		Slot.GetHandler().OnUpdate(m_Owner.GetWorld(), &m_Owner, Slot, false);
+	}
+
+	// The hotbar:
+	for (int i = 0; i < invHotbarCount; i++)
+	{
+		const cItem & Slot = m_HotbarSlots.GetSlot(i);
+		Slot.GetHandler().OnUpdate(m_Owner.GetWorld(), &m_Owner, Slot, (i == m_EquippedSlotNum));
 	}
 }
 
