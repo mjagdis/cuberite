@@ -14,10 +14,10 @@
 
 
 
-cMapSerializer::cMapSerializer(const AString & a_WorldName, cMap * a_Map):
+cMapSerializer::cMapSerializer(const AString & a_WorldDataPath, cMap * a_Map):
 	m_Map(a_Map)
 {
-	auto DataPath = fmt::format(FMT_STRING("{}{}data"), a_WorldName, cFile::PathSeparator());
+	auto DataPath = GetDataPath(a_WorldDataPath);
 	m_Path = fmt::format(FMT_STRING("{}{}map_{}.dat"), DataPath, cFile::PathSeparator(), a_Map->GetID());
 	cFile::CreateFolder(DataPath);
 }
@@ -28,16 +28,23 @@ cMapSerializer::cMapSerializer(const AString & a_WorldName, cMap * a_Map):
 
 bool cMapSerializer::Load()
 {
-	const auto Data = GZipFile::ReadRestOfFile(m_Path);
-	const cParsedNBT NBT(Data.GetView());
-
-	if (!NBT.IsValid())
+	try
 	{
-		// NBT Parsing failed
+		const auto Data = GZipFile::ReadRestOfFile(m_Path);
+		const cParsedNBT NBT(Data.GetView());
+
+		if (!NBT.IsValid())
+		{
+			// NBT Parsing failed
+			return false;
+		}
+
+		return LoadMapFromNBT(NBT);
+	}
+	catch (...)
+	{
 		return false;
 	}
-
-	return LoadMapFromNBT(NBT);
 }
 
 
@@ -66,6 +73,8 @@ bool cMapSerializer::Save(void)
 
 void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 {
+	cCSLock Lock(m_Map->m_CS);
+
 	a_Writer.BeginCompound("data");
 
 	a_Writer.AddByte("scale", static_cast<Byte>(m_Map->GetScale()));
@@ -135,6 +144,8 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 		return false;
 	}
 
+	cCSLock Lock(m_Map->m_CS);
+
 	int CurrLine = a_NBT.FindChildByName(Data, "scale");
 	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
 	{
@@ -142,17 +153,18 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 		m_Map->SetScale(Scale);
 	}
 
+#if 0
+	// Although dimension is stored in map files (because Java Edition) Cuberite is
+	// multi-world, maps are associated with worlds and the dimension is not used.
 	CurrLine = a_NBT.FindChildByName(Data, "dimension");
 	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
 	{
-		eDimension Dimension = static_cast<eDimension>(a_NBT.GetByte(CurrLine));
-
-		if (Dimension != m_Map->m_World->GetDimension())
-		{
-			// TODO 2014-03-20 xdot: We should store nether maps in nether worlds, e.t.c.
-			return false;
-		}
+		// Careful! GetByte returns unsigned char but eDimension is an enum (signed int)
+		// that contains both -1 and 255. We need to change the unsigned char to signed
+		// before extending to eDimension.
+		eDimension Dimension = static_cast<eDimension>(static_cast<signed char>(a_NBT.GetByte(CurrLine)));
 	}
+#endif
 
 	// 1.14 and later include locked
 	CurrLine = a_NBT.FindChildByName(Data, "locked");
@@ -320,9 +332,10 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 
 
 
-cIDCountSerializer::cIDCountSerializer(const AString & a_WorldName) : m_MapCount(0)
+cIDCountSerializer::cIDCountSerializer(const AString & a_WorldDataPath) :
+	m_MapCount(0)
 {
-	auto DataPath = fmt::format(FMT_STRING("{}{}data"), a_WorldName, cFile::PathSeparator());
+	auto DataPath = cMapSerializer::GetDataPath(a_WorldDataPath);
 	m_Path = fmt::format(FMT_STRING("{}{}idcounts.dat"), DataPath, cFile::PathSeparator());
 	cFile::CreateFolder(DataPath);
 }
@@ -333,13 +346,16 @@ cIDCountSerializer::cIDCountSerializer(const AString & a_WorldName) : m_MapCount
 
 bool cIDCountSerializer::Load()
 {
+	// FIXME: later versions of Java Edition compress idcounts.dat
 	AString Data = cFile::ReadWholeFile(m_Path);
 	if (Data.empty())
 	{
-		return false;
+		Data = cFile::ReadWholeFile(m_Path);
+		if (Data.empty())
+		{
+			return false;
+		}
 	}
-
-	// NOTE: idcounts.dat is not compressed (raw format)
 
 	// Parse the NBT data:
 	cParsedNBT NBT({ reinterpret_cast<const std::byte *>(Data.data()), Data.size() });
@@ -363,11 +379,11 @@ bool cIDCountSerializer::Load()
 		switch (NBT.GetType(CurrLine))
 		{
 			case TAG_Int:
-				m_MapCount = static_cast<unsigned int>(NBT.GetInt(CurrLine) + 1);
+				m_MapCount = NBT.GetInt(CurrLine) + 1;
 				break;
 
 			case TAG_Short:
-				m_MapCount = static_cast<unsigned int>(NBT.GetShort(CurrLine) + 1);
+				m_MapCount = NBT.GetShort(CurrLine) + 1;
 				break;
 
 			default:
@@ -380,7 +396,6 @@ bool cIDCountSerializer::Load()
 	else
 	{
 		LOGERROR(fmt::format(FMT_STRING("Don't understand the contents of {}"), m_Path));
-		m_MapCount = 0;
 		return false;
 	}
 
@@ -393,6 +408,9 @@ bool cIDCountSerializer::Load()
 
 bool cIDCountSerializer::Save(void)
 {
+	// NOTE: Cuberite never writes a compressed idcounts.dat and always uses
+	// short for the map value.
+
 	cFastNBTWriter Writer;
 
 	if (m_MapCount > 0)
@@ -412,8 +430,6 @@ bool cIDCountSerializer::Save(void)
 	{
 		return false;
 	}
-
-	// NOTE: idcounts.dat is not compressed (raw format)
 
 	File.Write(Writer.GetResult().data(), Writer.GetResult().size());
 	File.Close();

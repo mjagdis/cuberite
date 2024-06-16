@@ -19,8 +19,17 @@
 
 
 
+cCriticalSection cMapManager::m_CS;
+
+unsigned int cMapManager::m_NextID = 0;
+
+cMapManager::cMapList cMapManager::m_MapData;
+
+
+
+
+
 cMapManager::cMapManager(cWorld * a_World) :
-	m_NextID(0),
 	m_World(a_World),
 	m_TicksUntilNextSave(MAP_DATA_SAVE_INTERVAL)
 {
@@ -33,18 +42,17 @@ cMapManager::cMapManager(cWorld * a_World) :
 
 bool cMapManager::DoWithMap(UInt32 a_ID, cMapCallback a_Callback)
 {
-	cCSLock Lock(m_CS);
-	cMap * Map = GetMapData(a_ID);
+	std::shared_ptr<cMap> Map = GetMapData(a_ID);
 
-	if (Map == nullptr)
+	if (Map)
 	{
-		return false;
-	}
-	else
-	{
+		cCSLock Lock(Map->m_CS);
+
 		a_Callback(*Map);
 		return true;
 	}
+
+	return false;
 }
 
 
@@ -59,7 +67,10 @@ void cMapManager::TickMaps()
 	{
 		UNUSED(MapID);
 
-		Map.Tick();
+		if (Map->GetWorld() == m_World)
+		{
+			Map->Tick();
+		}
 	}
 
 	if (m_TicksUntilNextSave == 0)
@@ -77,28 +88,25 @@ void cMapManager::TickMaps()
 
 
 
-cMap * cMapManager::GetMapData(unsigned int a_ID)
+std::shared_ptr<cMap> cMapManager::GetMapData(unsigned int a_ID)
 {
-	try
-	{
-		return & m_MapData.at(a_ID);
-	}
-	catch (const std::out_of_range & ex)
-	{
-		return nullptr;
-	}
+	cCSLock Lock(m_CS);
+	auto itr = m_MapData.find(a_ID);
+	return (itr != m_MapData.end() ? itr->second : nullptr);
 }
 
 
 
 
 
-cMap * cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
+std::shared_ptr<cMap> cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
 {
 	cCSLock Lock(m_CS);
 
 	unsigned int ID = NextID();
-	auto [it, inserted] = m_MapData.try_emplace(ID, ID, a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
+	auto Map = std::make_shared<cMap>(ID, a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
+	auto [it, inserted] = m_MapData.try_emplace(ID, Map);
+	UNUSED(it);
 
 	if (!inserted)
 	{
@@ -107,19 +115,21 @@ cMap * cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, uns
 		return nullptr;
 	}
 
-	return &it->second;
+	return Map;
 }
 
 
 
 
 
-cMap * cMapManager::CopyMap(cMap & a_OldMap)
+std::shared_ptr<cMap> cMapManager::CopyMap(cMap & a_OldMap)
 {
 	cCSLock Lock(m_CS);
 
 	unsigned int ID = NextID();
-	auto [it, inserted] = m_MapData.try_emplace(ID, ID, a_OldMap);
+	auto Map = std::make_shared<cMap>(ID, a_OldMap);
+	auto [it, inserted] = m_MapData.try_emplace(ID, Map);
+	UNUSED(it);
 
 	if (!inserted)
 	{
@@ -128,7 +138,7 @@ cMap * cMapManager::CopyMap(cMap & a_OldMap)
 		return nullptr;
 	}
 
-	return &it->second;
+	return Map;
 }
 
 
@@ -139,26 +149,46 @@ void cMapManager::LoadMapData(void)
 {
 	cCSLock Lock(m_CS);
 
-	cIDCountSerializer IDSerializer(m_World->GetDataPath());
+	const AStringVector Files = cFile::GetFolderContents(cMapSerializer::GetDataPath(m_World->GetDataPath()));
 
-	if (!IDSerializer.Load())
+	for (const auto & File : Files)
 	{
-		return;
-	}
+		if (File.compare(0, 4, "map_") || File.compare(File.size() - 4, 4, ".dat"))
+		{
+			continue;
+		}
 
-	m_NextID = IDSerializer.GetMapCount();
+		unsigned int MapID;
+		try
+		{
+			MapID = std::stoul(File.substr(4, File.size() - 8));
+		}
+		catch (...)
+		{
+			continue;
+		}
 
-	m_MapData.clear();
+		auto Map = std::make_shared<cMap>(MapID, m_World);
+		auto [it, inserted] = m_MapData.try_emplace(MapID, Map);
+		Map = it->second;
 
-	for (unsigned int i = 0; i < m_NextID; ++i)
-	{
-		auto [it, inserted] = m_MapData.try_emplace(i, i, m_World);
+		if (!inserted)
+		{
+			LOGWARN(fmt::format(FMT_STRING("MapManager: ID {} already used by {} ignoring {}"), MapID, Map->m_World->GetName(), File));
+			continue;
+		}
 
-		cMapSerializer Serializer(m_World->GetDataPath(), &it->second);
-		Serializer.Load();
+		cMapSerializer Serializer(m_World->GetDataPath(), Map.get());
+		if (Serializer.Load())
+		{
+			// A just-loaded map isn't dirty even though we just "changed" it.
+			Map->m_Dirty = false;
 
-		// A just-loaded map isn't dirty even though we just "changed" it
-		it->second.m_Dirty = false;
+			// But it will need to be sent unconditionally to any existing clients.
+			Map->m_Send = true;
+		}
+
+		m_NextID = std::max(m_NextID, MapID + 1);
 	}
 }
 
@@ -170,29 +200,31 @@ void cMapManager::SaveMapData(void)
 {
 	cCSLock Lock(m_CS);
 
-	if (m_MapData.empty())
-	{
-		return;
-	}
-
-	// FIXME: We don't clean up orphaned map saves. This could waste a lot of disk eventually.
 	bool changes = false;
-	for (auto & [MapID, Map] : m_MapData)
+	unsigned int NextID = 0;
+
+	if (!m_MapData.empty())
 	{
-		if (Map.m_Dirty)
+		// FIXME: We don't clean up orphaned map saves. This could waste a lot of disk eventually.
+		for (auto [MapID, Map] : m_MapData)
 		{
-			cMapSerializer Serializer(m_World->GetDataPath(), &Map);
-
-			Map.m_Dirty = false;
-
-			if (Serializer.Save())
+			if (Map->m_Dirty && (Map->GetWorld() == m_World))
 			{
-				changes = true;
-			}
-			else
-			{
-				Map.m_Dirty = true;
-				LOGWARN("Could not save map #%i", MapID);
+				NextID = std::max(NextID, MapID);
+
+				cMapSerializer Serializer(m_World->GetDataPath(), Map.get());
+
+				Map->m_Dirty = false;
+
+				if (Serializer.Save())
+				{
+					changes = true;
+				}
+				else
+				{
+					Map->m_Dirty = true;
+					LOGWARN("Could not save map #%i", MapID);
+				}
 			}
 		}
 	}
@@ -201,7 +233,7 @@ void cMapManager::SaveMapData(void)
 	{
 		cIDCountSerializer IDSerializer(m_World->GetDataPath());
 
-		IDSerializer.SetMapCount(m_NextID);
+		IDSerializer.SetMapCount(NextID);
 
 		if (!IDSerializer.Save())
 		{

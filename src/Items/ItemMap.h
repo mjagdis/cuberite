@@ -12,26 +12,17 @@ class cItemMapHandler final:
 {
 	using Super = cItemHandler;
 
-	static const unsigned int DEFAULT_RADIUS = 128;
-
 public:
 
 	using Super::Super;
 
 	virtual void OnUpdate(cWorld * a_World, cPlayer * a_Player, const cItem & a_Item, bool a_IsEquipped) const override
 	{
-		cMap * Map = a_World->GetMapManager().GetMapData(static_cast<unsigned>(a_Item.m_ItemDamage));
-
-		if (Map == nullptr)
-		{
-			return;
-		}
-
-		Map->UpdateClient(a_Player);
-
-		if (a_IsEquipped)
-		{
-			Map->UpdateRadius(*a_Player, DEFAULT_RADIUS);
-		}
+		a_World->GetMapManager().DoWithMap(static_cast<unsigned>(a_Item.m_ItemDamage), [a_Player, a_IsEquipped](cMap & a_Map)
+			{
+				a_Map.UpdateClient(a_Player, a_IsEquipped);
+				return true;
+			}
+		);
 	}
 } ;

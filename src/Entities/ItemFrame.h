@@ -37,6 +37,8 @@ public:  // tolua_export
 
 	// tolua_end
 
+	virtual void Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk) override;
+
 private:
 
 	virtual bool DoTakeDamage(TakeDamageInfo & a_TDI) override;

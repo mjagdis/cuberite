@@ -132,14 +132,43 @@ void cItemFrame::SpawnOn(cClientHandle & a_ClientHandle)
 	{
 		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [this](cMap & a_Map)
 			{
-				// Make sure the player marker exists on the map. Before Minecraft Java 1.13
-				// saved map files didn't contain decorators.
-				a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
+				if (a_Map.GetWorld() == GetWorld())
+				{
+					// Make sure the frame marker exists on the map. Before Java Edition 1.13
+					// saved map files didn't contain decorators and relied on item frames being
+					// spawned in when chunks were loaded meaning item frames were missing on
+					// newly loaded maps until the area had been visited.
+					// N.B. Cuberite saves markers so this is only necessary to support saves
+					// from pre-1.13 Java Edition.
+					a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
+				}
 
-				// Send the full map to the client.
-				a_Map.SendCompleteMapData(a_ClientHandle);
 				return true;
 			}
 		);
 	}
+}
+
+
+
+
+
+void cItemFrame::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
+{
+	if (m_Item.m_ItemType == E_ITEM_MAP)
+	{
+		// All clients interested in this chunk are also going to need to see changes
+		// to the framed map.
+		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [&a_Chunk](cMap & a_Map)
+			{
+				for (auto Client : a_Chunk.GetAllClients())
+				{
+					a_Map.AddClient(Client);
+				}
+				return true;
+			}
+		);
+	}
+
+	Super::Tick(a_Dt, a_Chunk);
 }
