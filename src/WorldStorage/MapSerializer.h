@@ -26,7 +26,12 @@ class cMapSerializer
 {
 public:
 
-	cMapSerializer(const AString & a_WorldName, cMap * a_Map);
+	static AString GetDataPath(const AString & a_WorldDataPath)
+	{
+		return fmt::format(FMT_STRING("{}{}data"), a_WorldDataPath, cFile::PathSeparator());
+	}
+
+	cMapSerializer(const AString & a_WorldDataPath, cMap * a_Map);
 
 	/** Try to load the map */
 	bool Load(void);
@@ -59,7 +64,7 @@ class cIDCountSerializer
 {
 public:
 
-	cIDCountSerializer(const AString & a_WorldName);
+	cIDCountSerializer(const AString & a_WorldDataPath);
 
 	/** Try to load the ID counts */
 	bool Load(void);

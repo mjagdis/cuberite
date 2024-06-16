@@ -30,18 +30,14 @@ class cMapManager
 public:
 	/** Creates a new map with the same contents as an existing map.
 	Returns the new map or nullptr if no more maps can be created. */
-	cMap * CopyMap(cMap & a_OldMap);
+	std::shared_ptr<cMap> CopyMap(cMap & a_OldMap);
 
 	// tolua_end
 
 	cMapManager(cWorld * a_World);
 
-	/** Returns the map with the specified ID, nullptr if out of range.
-	WARNING: The returned map object is not thread safe. */
-	cMap * GetMapData(unsigned int a_ID);
-
 	/** Creates a new map. Returns nullptr on error */
-	cMap * CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 3);
+	std::shared_ptr<cMap> CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 3);
 
 	/** Calls the callback for the map with the specified ID.
 	Returns true if the map was found and the callback called, false if map not found.
@@ -60,13 +56,16 @@ public:
 
 private:
 
-	typedef std::unordered_map<unsigned int, cMap> cMapList;
+	/** Returns the map with the specified ID, nullptr if out of range. */
+	std::shared_ptr<cMap> GetMapData(unsigned int a_ID);
 
-	cCriticalSection m_CS;
+	typedef std::unordered_map<unsigned int, std::shared_ptr<cMap>> cMapList;
 
-	unsigned int m_NextID;
+	static cCriticalSection m_CS;
 
-	cMapList m_MapData;
+	static unsigned int m_NextID;
+
+	static cMapList m_MapData;
 
 	cWorld * m_World;
 

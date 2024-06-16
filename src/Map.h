@@ -9,9 +9,31 @@
 
 #pragma once
 
+#include <shared_mutex>
+
 #include "Defines.h"
 #include "ChunkDef.h"
 #include "FastRandom.h"
+
+
+
+
+/**
+Java Edition: maps for a different dimension to the player
+retain the player's last position in the map's dimension
+and the marker is always static (not spinning).
+FIXME: true for 1.12.2, check for latest
+
+Bedrock Edition: the marker changes colour depending on the
+player's dimension and the player's position is transformed
+to the map's dimension's coordinates. If no transform exists
+(such as a nether map in the end or an end map in the overworld
+or nether) the marker is not displayed.
+
+Cuberite: markers are only shown if the player is in the
+same world as the map.
+*/
+
 
 
 
@@ -28,7 +50,8 @@ class cMap;
 // tolua_begin
 
 /** Encapsulates an in-game world map. */
-class cMap
+class cMap :
+	public std::enable_shared_from_this<cMap>
 {
 public:
 	enum class icon
@@ -146,7 +169,7 @@ public:
 				return Send;
 			}
 
-			void Spin(void)
+			bool Spin(void)
 			{
 				if (m_Icon <= cMap::icon::MAP_ICON_BLUE_ARROW)
 				{
@@ -156,9 +179,17 @@ public:
 						m_SpinTime = 8 + GetRandomProvider().RandInt(12) / m_SpinRate;
 						m_SpinRate = (GetRandomProvider().RandInt(1) > 0 ? m_SpinRate : -m_SpinRate);
 					}
+
 					m_Spin += m_SpinRate;
-					m_CurrentRot = m_Spin / 2;
+
+					char Rot = m_Spin / 2;
+					bool ret = (Rot != m_CurrentRot);
+					m_CurrentRot = Rot;
+
+					return ret;
 				}
+
+				return false;
 			}
 
 			cMap::icon m_Icon;
@@ -177,7 +208,7 @@ public:
 
 	static const int MAP_WIDTH = 128;
 	static const int MAP_HEIGHT = 128;
-	static const int DEFAULT_RADIUS = 128;
+	static const unsigned int DEFAULT_RADIUS = 128;
 	static const unsigned int DEFAULT_TRACKING_DISTANCE = 320;
 	static const unsigned int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
 
@@ -214,7 +245,7 @@ public:
 
 	// tolua_end
 
-	typedef std::vector<cClientHandle *> cMapClientList;
+	typedef std::set<cClientHandle *> cMapClientList;
 	typedef std::multimap<Decorator::Key, Decorator::Value> cMapDecoratorList;
 
 	/** Construct an empty map. */
@@ -224,25 +255,21 @@ public:
 	cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale = 3);
 
 	/** Construct a filled map as a copy of the given map. */
-	cMap(unsigned int a_ID, const cMap & a_Map);
+	cMap(unsigned int a_ID, cMap & a_Map);
 
-	/** Send the complete map data to the specified client. */
-	void SendCompleteMapData(cClientHandle & a_ClientHandle) const;
+	cMap(cMap & a_Map) = delete;
+	cMap(const cMap & a_Map) = delete;
 
 	/** Sends a map update to all registered clients
 	Clears the list holding registered clients and decorators */
 	void Tick();
 
-	/** Update a circular region with the specified radius and center (in pixels). */
-	void UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius);
-
-	/** Update a circular region around the specified player. */
-	void UpdateRadius(cPlayer & a_Player, unsigned int a_Radius);
-
 	/** Send next update packet to the specified player and remove invalid decorators / clients. */
-	void UpdateClient(cPlayer * a_Player);
+	void UpdateClient(const cPlayer * a_Player, bool a_UpdateMap);
 
 	// tolua_begin
+
+	// These should ONLY be called from inside a DoWithMap!
 
 	void SetPosition(int a_CenterX, int a_CenterZ);
 
@@ -275,9 +302,9 @@ public:
 
 	unsigned int GetID(void) const { return m_ID; }
 
-	cWorld * GetWorld(void) { return m_World; }
+	cWorld * GetWorld(void) const { return m_World; }
 
-	AString GetName(void) { return m_Name; }
+	AString GetName(void) const { return m_Name; }
 
 	eDimension GetDimension(void) const;
 
@@ -295,45 +322,50 @@ public:
 
 	unsigned int GetFarTrackingThreshold(void) const { return m_FarTrackingThreshold; }
 
-	unsigned int GetTrackingDistance(const cEntity * a_Entity) const { return GetTrackingDistance(a_Entity->GetPosition()); }
-
 	unsigned int GetTrackingDistance(const Vector3d & a_Position) const
 	{
 		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
 	}
 
-	void AddDecorator(UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw)
+	void AddMarker(UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw)
 	{
-		AddDecorator(cMap::DecoratorType::PERSISTENT, a_Id, a_Icon, a_Position, a_Yaw);
+		AddDecorator(DecoratorType::PERSISTENT, a_Id, a_Icon, a_Position, a_Yaw);
 	}
 
-	void RemoveDecorator(UInt32 a_Id)
+	void RemoveMarker(UInt32 a_Id)
 	{
-		RemoveDecorator(cMap::DecoratorType::PERSISTENT, a_Id);
+		RemoveDecorator(DecoratorType::PERSISTENT, a_Id);
 	}
 
 	// tolua_end
 
-	void AddDecorator(cMap::DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw);
-
-	void RemoveDecorator(cMap::DecoratorType a_Type, UInt32 a_Id);
-
 	void AddFrame(UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
 	{
-		AddDecorator(cMap::DecoratorType::FRAME, a_Id, cMap::icon::MAP_ICON_GREEN_ARROW, a_Position, a_Yaw);
+		AddDecorator(DecoratorType::FRAME, a_Id, icon::MAP_ICON_GREEN_ARROW, a_Position, a_Yaw);
 	}
 
 	void RemoveFrame(UInt32 a_Id)
 	{
-		RemoveDecorator(cMap::DecoratorType::FRAME, a_Id);
+		RemoveDecorator(DecoratorType::FRAME, a_Id);
 	}
 
 	const cMapDecoratorList GetDecorators(void) const { return m_Decorators; }
 
+	void AddClient(cClientHandle * a_Client) { m_ClientsInCurrentTick.emplace(a_Client); }
+
 private:
+
+	mutable cCriticalSection m_CS;
+
+	/** Update a circular region with the specified radius and center (in pixels). */
+	void UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius = DEFAULT_RADIUS);
 
 	/** Update the specified pixel. */
 	bool UpdatePixel(UInt8 a_X, UInt8 a_Z);
+
+	void AddDecorator(DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw);
+
+	void RemoveDecorator(DecoratorType a_Type, UInt32 a_Id);
 
 	unsigned int m_ID;
 
@@ -363,6 +395,7 @@ private:
 	cWorld * m_World;
 
 	cMapClientList m_ClientsInCurrentTick;
+	cMapClientList m_ClientsWithCurrentData;
 
 	cMapDecoratorList m_Decorators;
 
