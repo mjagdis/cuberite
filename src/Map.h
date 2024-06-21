@@ -159,17 +159,19 @@ public:
 					Rot = YawToRot(a_Yaw);
 				}
 
-				bool Send = ((a_MapX != m_MapX) || (a_MapZ != m_MapZ) || (Rot != m_CurrentRot) || (a_Icon != m_Icon));
+				if ((a_MapX != m_MapX) || (a_MapZ != m_MapZ) || (Rot != m_CurrentRot) || (a_Icon != m_Icon) || m_Name.compare(a_Name))
+				{
+					m_Icon = a_Icon;
+					m_Position = a_Position;
+					m_Yaw = a_Yaw;
+					m_MapX = a_MapX;
+					m_MapZ = a_MapZ;
+					m_CurrentRot = Rot;
+					m_Name = a_Name;
+					return true;
+				}
 
-				m_Icon = a_Icon;
-				m_Position = a_Position;
-				m_Yaw = a_Yaw;
-				m_MapX = a_MapX;
-				m_MapZ = a_MapZ;
-				m_CurrentRot = Rot;
-				m_Name = a_Name;
-
-				return Send;
+				return false;
 			}
 
 			bool Spin(void)
@@ -413,9 +415,6 @@ private:
 	unsigned int m_TrackingThreshold;
 	unsigned int m_FarTrackingThreshold;
 
-	/** Column-major array of colours */
-	ColorID m_Data[MAP_WIDTH * MAP_HEIGHT];
-
 	cWorld * m_World;
 
 	cMapClientList m_ClientsInCurrentTick;
@@ -424,6 +423,9 @@ private:
 	cMapDecoratorList m_Decorators;
 
 	AString m_Name;
+
+	/** Column-major array of colours */
+	ColorID m_Data[MAP_WIDTH * MAP_HEIGHT];
 
 	friend class cMapManager;
 	friend class cMapSerializer;
