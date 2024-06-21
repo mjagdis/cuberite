@@ -7,8 +7,62 @@
 #include "OSSupport/GZipFile.h"
 #include "FastNBT.h"
 
+#include "json/json.h"
+#include "../JsonUtils.h"
 #include "../Map.h"
 #include "../World.h"
+
+
+
+
+
+namespace
+{
+	const AString ColourName[] =
+	{
+		AString("white"),
+		AString("orange"),
+		AString("magenta"),
+		AString("light_blue"),
+		AString("yellow"),
+		AString("lime"),
+		AString("pink"),
+		AString("gray"),
+		AString("light_gray"),
+		AString("cyan"),
+		AString("purple"),
+		AString("blue"),
+		AString("brown"),
+		AString("green"),
+		AString("red"),
+		AString("black")
+	};
+
+
+
+
+	const AString ColourToName(int a_Colour)
+	{
+		return ColourName[a_Colour & 0x0f];
+	}
+
+
+
+
+
+	int ColourFromName(const AString a_Name)
+	{
+		for (unsigned int i = 0; i < sizeof(ColourName) / sizeof(ColourName[0]); i++)
+		{
+			if (!ColourName[i].compare(a_Name))
+			{
+				return i;
+			}
+		}
+
+		return 0;
+	}
+}
 
 
 
@@ -104,7 +158,7 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 	a_Writer.BeginList("frames", TAG_Compound);
 	for (const auto & itr : m_Map->GetDecorators())
 	{
-		if (itr.first.m_Type != cMap::DecoratorType::PLAYER)
+		if ((itr.first.m_Type == cMap::DecoratorType::FRAME) || (itr.first.m_Type == cMap::DecoratorType::PERSISTENT))
 		{
 			a_Writer.BeginCompound("");
 
@@ -121,6 +175,36 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 			// by plugins. We need to save type and icon for those.
 			a_Writer.AddByte("Type", static_cast<unsigned char>(itr.first.m_Type));
 			a_Writer.AddByte("Icon", static_cast<unsigned char>(itr.second.m_Icon));
+
+			a_Writer.EndCompound();
+		}
+	}
+	a_Writer.EndList();
+
+	a_Writer.BeginList("banners", TAG_Compound);
+	for (const auto & itr : m_Map->GetDecorators())
+	{
+		if (itr.first.m_Type == cMap::DecoratorType::BANNER)
+		{
+			a_Writer.BeginCompound("");
+
+			a_Writer.BeginCompound("Pos");
+				a_Writer.AddInt("X", itr.second.m_Position.x);
+				a_Writer.AddInt("Y", itr.second.m_Position.y);
+				a_Writer.AddInt("Z", itr.second.m_Position.z);
+			a_Writer.EndCompound();
+
+			if (itr.second.m_Icon > 10)
+			{
+				a_Writer.AddString("Color", ColourToName(itr.second.m_Icon - 10));
+			}
+
+			if (itr.second.m_Name.size() > 0)
+			{
+				// Java Edition 1.13 saves this as a JSON object. 1.20 has it as
+				// a quoted string.
+				a_Writer.AddString("Name", JsonUtils::SerializeSingleValueJsonObject("text", itr.second.m_Name));
+			}
 
 			a_Writer.EndCompound();
 		}
@@ -220,7 +304,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 		for (int Frame = a_NBT.GetFirstChild(Frames); Frame >= 0; Frame = a_NBT.GetNextSibling(Frame))
 		{
 			cMap::DecoratorType Type = cMap::DecoratorType::FRAME;
-			cMap::icon Icon = cMap::icon::MAP_ICON_GREEN_ARROW;
+			cMap::eMapIcon Icon = cMap::eMapIcon::E_MAP_ICON_GREEN_ARROW;
 			Vector3d Position;
 			int EntityId = 0, Yaw = 0;
 
@@ -295,7 +379,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 			}
 
 			// Cuberite also has non-item frame decorators that may have been added
-			// by plugins. We will have type and icon for those.
+			// by plugins. Cuberite saves them as frames with addition of type and icon.
 			CurrLine = a_NBT.FindChildByName(Frame, "Type");
 			if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
 			{
@@ -305,10 +389,110 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 			CurrLine = a_NBT.FindChildByName(Frame, "Icon");
 			if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Byte))
 			{
-				Icon = static_cast<cMap::icon>(a_NBT.GetByte(CurrLine));
+				Icon = static_cast<cMap::eMapIcon>(a_NBT.GetByte(CurrLine));
 			}
 
-			m_Map->AddDecorator(Type, EntityId, Icon, Position, Yaw);
+			m_Map->AddDecorator(Type, EntityId, Icon, Position, Yaw, "");
+		}
+	}
+
+	int Banners = a_NBT.FindChildByName(Data, "banners");
+	if ((Banners >= 0) && (a_NBT.GetType(Banners) == TAG_List))
+	{
+		for (int Banner = a_NBT.GetFirstChild(Banners); Banner >= 0; Banner = a_NBT.GetNextSibling(Banner))
+		{
+			Vector3d Position;
+			int Colour = 0;
+			AString Name = "";
+
+			// The decoration structure changed somewhat arbitrarily (IMHO) in Java Edition 1.20.
+			// Cuberite currently saves using the pre-1.20 style.
+			int Pos = a_NBT.FindChildByName(Banner, "Pos");
+			if ((Pos >= 0) && (a_NBT.GetType(Pos) == TAG_Compound))
+			{
+				// Java Edition before 1.20
+				CurrLine = a_NBT.FindChildByName(Pos, "X");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+				{
+					Position.x = a_NBT.GetInt(CurrLine);
+				}
+
+				CurrLine = a_NBT.FindChildByName(Pos, "Y");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+				{
+					Position.y = a_NBT.GetInt(CurrLine);
+				}
+
+				CurrLine = a_NBT.FindChildByName(Pos, "Z");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
+				{
+					Position.z = a_NBT.GetInt(CurrLine);
+				}
+
+				CurrLine = a_NBT.FindChildByName(Banner, "Color");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_String))
+				{
+					Colour = ColourFromName(a_NBT.GetString(CurrLine));
+				}
+
+				CurrLine = a_NBT.FindChildByName(Banner, "Name");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_String))
+				{
+					Name = a_NBT.GetString(CurrLine);
+				}
+			}
+			else if ((Pos >= 0) && (a_NBT.GetType(Pos) == TAG_IntArray))
+			{
+				// Java Edition 1.20 and later
+				size_t DataLength = a_NBT.GetDataLength(Pos);
+				if (DataLength == 12)
+				{
+					const auto * PosData = (a_NBT.GetData(Pos));
+					Position.x = GetBEInt(PosData + 0);
+					Position.y = GetBEInt(PosData + 4);
+					Position.z = GetBEInt(PosData + 8);
+				}
+
+				CurrLine = a_NBT.FindChildByName(Banner, "color");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_String))
+				{
+					Colour = ColourFromName(a_NBT.GetString(CurrLine));
+				}
+
+				CurrLine = a_NBT.FindChildByName(Banner, "name");
+				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_String))
+				{
+					Name = a_NBT.GetString(CurrLine);
+				}
+			}
+			else
+			{
+				// Well, I don't know what to make of this...
+				continue;
+			}
+
+			// Java Edition 1.13 has name as a JSON object. 1.20 has it as a quoted string.
+			if (Name[0] == '{')
+			{
+				Json::Value root;
+				if (JsonUtils::ParseString(Name, root))
+				{
+					if (root.isObject())
+					{
+						const auto & txt = root["text"];
+						if (txt.isString())
+						{
+							Name = txt.asString();
+						}
+					}
+					else if (root.isString())
+					{
+						Name = root.asString();
+					}
+				}
+			}
+
+			m_Map->AddBanner(15 - Colour, Position, Name);
 		}
 	}
 

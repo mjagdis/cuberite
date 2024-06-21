@@ -181,6 +181,52 @@ void cProtocol_1_14::SendLogin(const cPlayer & a_Player, const cWorld & a_World)
 
 void cProtocol_1_14::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a_DataStartY, UInt8 a_DataEndX, UInt8 a_DataEndY)
 {
+	ASSERT(m_State == 3);  // In game mode?
+
+	cPacketizer Pkt(*this, pktMapData);
+	Pkt.WriteVarInt32(a_Map.GetID());
+	Pkt.WriteBEUInt8(static_cast<UInt8>(a_Map.GetScale()));
+	Pkt.WriteBool(a_Map.GetLocked());
+
+	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
+	if (static_cast<UInt32>(a_Map.GetDecorators().size()) > 0)
+	{
+		for (const auto & itr : a_Map.GetDecorators())
+		{
+			Pkt.WriteVarInt32(itr.second.m_Icon);
+			Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapX));
+			Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
+			Pkt.WriteBEUInt8(itr.second.m_CurrentRot);
+			Pkt.WriteBool(!itr.second.m_Name.empty());
+			if (!itr.second.m_Name.empty())
+			{
+				Pkt.WriteString(JsonUtils::SerializeSingleValueJsonObject("text", itr.second.m_Name));
+			}
+		}
+	}
+
+	if (a_DataEndX < a_DataStartX)
+	{
+		Pkt.WriteBEUInt8(0);
+	}
+	else
+	{
+		Pkt.WriteBEUInt8(a_DataEndX - a_DataStartX + 1);
+		Pkt.WriteBEUInt8(a_DataEndY - a_DataStartY + 1);
+		Pkt.WriteBEUInt8(a_DataStartX);
+		Pkt.WriteBEUInt8(a_DataStartY);
+
+		UInt32 count = (a_DataEndX - a_DataStartX + 1) * (a_DataEndY - a_DataStartY + 1);
+		Pkt.WriteVarInt32(count);
+
+		for (UInt8 y = a_DataStartY; y <= a_DataEndY; y++)
+		{
+			for (UInt8 x = a_DataStartX; x <= a_DataEndX; x++)
+			{
+				Pkt.WriteBEUInt8(a_Map.GetPixel(x, y));
+			}
+		}
+	}
 }
 
 

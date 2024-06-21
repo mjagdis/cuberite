@@ -161,6 +161,9 @@ protected:
 	Only entities that the Send Spawn Entity packet supports are valid inputs to this method */
 	virtual UInt8 GetProtocolEntityType(const cEntity & a_Entity) const;
 
+	/** Converts a map icon to a protocol-specific icon. */
+	virtual std::pair<cMap::eMapIcon, UInt8> GetProtocolMapIcon(cMap::eMapIcon a_Icon, UInt8 a_Rot) const;
+
 	/** Converts eMonsterType to protocol-specific mob types */
 	virtual UInt32 GetProtocolMobType(eMonsterType a_MobType) const;
 
