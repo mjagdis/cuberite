@@ -99,23 +99,24 @@ std::shared_ptr<cMap> cMapManager::GetMapData(unsigned int a_ID)
 
 
 
-std::shared_ptr<cMap> cMapManager::CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
+bool cMapManager::CreateMap(unsigned short & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
 {
 	cCSLock Lock(m_CS);
 
-	unsigned int ID = NextID();
-	auto Map = std::make_shared<cMap>(ID, a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
-	auto [it, inserted] = m_MapData.try_emplace(ID, Map);
+	a_MapID = NextID();
+
+	auto Map = std::make_shared<cMap>(a_MapID, a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
+	auto [it, inserted] = m_MapData.try_emplace(a_MapID, Map);
 	UNUSED(it);
 
 	if (!inserted)
 	{
 		// Either the IDs wrapped or something went horribly wrong
-		LOGWARN(fmt::format(FMT_STRING("Could not craft map {} - too many maps in use?"), ID));
-		return nullptr;
+		LOGWARN(fmt::format(FMT_STRING("Could not craft map {} - too many maps in use?"), a_MapID));
+		return false;
 	}
 
-	return Map;
+	return true;
 }
 
 
