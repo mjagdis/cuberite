@@ -23,6 +23,7 @@ Implements the 1.8 protocol classes:
 #include "../UUID.h"
 #include "../World.h"
 #include "../JsonUtils.h"
+#include "../Map.h"
 
 #include "../WorldStorage/FastNBT.h"
 #include "../WorldStorage/EnchantmentSerializer.h"
@@ -906,7 +907,9 @@ void cProtocol_1_8_0::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 
 	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
 	for (const auto & itr : a_Map.GetDecorators())
 	{
-		Pkt.WriteBEUInt8(static_cast<Byte>((static_cast<Int32>(itr.second.m_Icon) << 4) | (itr.second.m_CurrentRot & 0xF)));
+		auto [Icon, Rot] = GetProtocolMapIcon(itr.second.m_Icon, itr.second.m_CurrentRot);
+
+		Pkt.WriteBEUInt8(static_cast<Byte>((Icon << 4) | (Rot & 0xF)));
 		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapX));
 		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
 	}
@@ -2041,6 +2044,74 @@ signed char cProtocol_1_8_0::GetProtocolEntityStatus(const EntityAnimation a_Ani
 		case EntityAnimation::ZombieVillagerCureFinishes: return 16;
 		default: return -1;
 	}
+}
+
+
+
+
+
+std::pair<cMap::eMapIcon, UInt8> cProtocol_1_8_0::GetProtocolMapIcon(cMap::eMapIcon a_Icon, UInt8 a_Rot) const
+{
+	switch (a_Icon)
+	{
+		case cMap::eMapIcon::E_MAP_ICON_PLAYER:
+		case cMap::eMapIcon::E_MAP_ICON_GREEN_ARROW:
+		case cMap::eMapIcon::E_MAP_ICON_RED_ARROW:
+		case cMap::eMapIcon::E_MAP_ICON_BLUE_ARROW:
+		case cMap::eMapIcon::E_MAP_ICON_WHITE_CROSS:
+		case cMap::eMapIcon::E_MAP_ICON_RED_POINTER:
+		case cMap::eMapIcon::E_MAP_ICON_PLAYER_OUTSIDE:
+		case cMap::eMapIcon::E_MAP_ICON_PLAYER_FAR_OUTSIDE:
+		case cMap::eMapIcon::E_MAP_ICON_MANSION:
+		case cMap::eMapIcon::E_MAP_ICON_MONUMENT:
+		{
+			return std::make_pair(a_Icon, a_Rot);
+		}
+
+		// Replace banners with arrows adjusted to point downwards (it's more banner-like).
+		// Colours are somewhat restricted though.
+		case cMap::eMapIcon::E_MAP_ICON_WHITE_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_YELLOW_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_LIGHT_GRAY_BANNER:
+		{
+			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_PLAYER, a_Rot + 8);
+		}
+		case cMap::eMapIcon::E_MAP_ICON_ORANGE_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_MAGENTA_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_PINK_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_BLACK_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_RED_BANNER:
+		{
+			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_RED_ARROW, a_Rot + 8);
+		}
+		case cMap::eMapIcon::E_MAP_ICON_LIGHT_BLUE_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_PURPLE_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_BLUE_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_BROWN_BANNER:
+		{
+			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_BLUE_ARROW, a_Rot + 8);
+		}
+		case cMap::eMapIcon::E_MAP_ICON_LIME_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_GRAY_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_CYAN_BANNER:
+		case cMap::eMapIcon::E_MAP_ICON_GREEN_BANNER:
+		{
+			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_GREEN_ARROW, a_Rot + 8);
+		}
+
+		case cMap::eMapIcon::E_MAP_ICON_TREASURE_MARKER:
+		{
+			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_WHITE_CROSS, 0);
+		}
+
+		default:
+		{
+			break;
+		}
+	}
+
+	// We have no clue how to represent this so just use a small, white circle.
+	return std::make_pair(cMap::eMapIcon::E_MAP_ICON_PLAYER_FAR_OUTSIDE, 0);
 }
 
 

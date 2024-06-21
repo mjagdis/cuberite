@@ -448,9 +448,11 @@ void cProtocol_1_9_0::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 
 	Pkt.WriteBool(a_Map.GetTrackingPosition());
 
 	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
-	for (const auto itr : a_Map.GetDecorators())
+	for (const auto & itr : a_Map.GetDecorators())
 	{
-		Pkt.WriteBEUInt8(static_cast<Byte>((static_cast<Int32>(itr.second.m_Icon) << 4) | (itr.second.m_CurrentRot & 0xF)));
+		auto [Icon, Rot] = GetProtocolMapIcon(itr.second.m_Icon, itr.second.m_CurrentRot);
+
+		Pkt.WriteBEUInt8(static_cast<Byte>((Icon << 4) | (Rot & 0xF)));
 		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapX));
 		Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
 	}

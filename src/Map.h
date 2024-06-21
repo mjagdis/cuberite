@@ -54,36 +54,37 @@ class cMap :
 	public std::enable_shared_from_this<cMap>
 {
 public:
-	enum class icon
+	enum eMapIcon
 	{
-		MAP_ICON_PLAYER             = 0,
-		MAP_ICON_GREEN_ARROW        = 1,  ///< Used for item frames.
-		MAP_ICON_RED_ARROW          = 2,
-		MAP_ICON_BLUE_ARROW         = 3,
-		MAP_ICON_WHITE_CROSS        = 4,
-		MAP_ICON_RED_POINTER        = 5,
-		MAP_ICON_PLAYER_OUTSIDE     = 6,  ///< Player outside of the boundaries of the map.
-		MAP_ICON_PLAYER_FAR_OUTSIDE = 7,  ///< Player far outside of the boundaries of the map.
-		MAP_ICON_MANSION            = 8,
-		MAP_ICON_MONUMENT           = 9,
+		E_MAP_ICON_PLAYER             = 0,
+		E_MAP_ICON_GREEN_ARROW        = 1,  ///< Used for item frames.
+		E_MAP_ICON_RED_ARROW          = 2,
+		E_MAP_ICON_BLUE_ARROW         = 3,
+		E_MAP_ICON_WHITE_CROSS        = 4,
+		E_MAP_ICON_RED_POINTER        = 5,
+		E_MAP_ICON_PLAYER_OUTSIDE     = 6,  ///< Player outside of the boundaries of the map.
+		E_MAP_ICON_PLAYER_FAR_OUTSIDE = 7,  ///< Player far outside of the boundaries of the map.
+		E_MAP_ICON_MANSION            = 8,
+		E_MAP_ICON_MONUMENT           = 9,
 
-		MAP_ICON_WHITE_BANNER       = 10,
-		MAP_ICON_ORANGE_BANNER      = 11,
-		MAP_ICON_MAGENTA_BANNER     = 12,
-		MAP_ICON_LIGHT_BLUE_BANNER  = 13,
-		MAP_ICON_YELLOW_BANNER      = 14,
-		MAP_ICON_LIME_BANNER        = 15,
-		MAP_ICON_PINK_BANNER        = 16,
-		MAP_ICON_GRAY_BANNER        = 17,
-		MAP_ICON_LIGHT_GRAY_BANNER  = 18,
-		MAP_ICON_CYAN_BANNER        = 19,
-		MAP_ICON_PURPLE_BANNER      = 20,
-		MAP_ICON_BLUE_BANNER        = 21,
-		MAP_ICON_BROWN_BANNER       = 22,
-		MAP_ICON_GREEN_BANNER       = 23,
-		MAP_ICON_RED_BANNER         = 24,
-		MAP_ICON_BLACK_BANNER       = 25,
-		MAP_ICON_TREASURE_MARKER    = 26,
+		E_MAP_ICON_WHITE_BANNER       = 10,
+		E_MAP_ICON_ORANGE_BANNER      = 11,
+		E_MAP_ICON_MAGENTA_BANNER     = 12,
+		E_MAP_ICON_LIGHT_BLUE_BANNER  = 13,
+		E_MAP_ICON_YELLOW_BANNER      = 14,
+		E_MAP_ICON_LIME_BANNER        = 15,
+		E_MAP_ICON_PINK_BANNER        = 16,
+		E_MAP_ICON_GRAY_BANNER        = 17,
+		E_MAP_ICON_LIGHT_GRAY_BANNER  = 18,
+		E_MAP_ICON_CYAN_BANNER        = 19,
+		E_MAP_ICON_PURPLE_BANNER      = 20,
+		E_MAP_ICON_BLUE_BANNER        = 21,
+		E_MAP_ICON_BROWN_BANNER       = 22,
+		E_MAP_ICON_GREEN_BANNER       = 23,
+		E_MAP_ICON_RED_BANNER         = 24,
+		E_MAP_ICON_BLACK_BANNER       = 25,
+
+		E_MAP_ICON_TREASURE_MARKER    = 26,
 	};
 
 	// tolua_end
@@ -128,14 +129,14 @@ public:
 		class Value
 		{
 		private:
-			static char YawToRot(int a_Yaw)
+			static char YawToRot(double a_Yaw)
 			{
-				return CeilC(((a_Yaw - 11.25) * 16) / 360);
+				return CeilC(((a_Yaw - 11.25) * 16) / 360) & 0x0f;
 			}
 
 		public:
 
-			Value(cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ) :
+			Value(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, signed char a_MapX, signed char a_MapZ, const AString & a_Name) :
 				m_Icon(a_Icon),
 				m_Position(a_Position),
 				m_Yaw(a_Yaw),
@@ -144,11 +145,12 @@ public:
 				m_CurrentRot(YawToRot(a_Yaw)),
 				m_Spin(0),
 				m_SpinTime(0),
-				m_SpinRate(0)
+				m_SpinRate(0),
+				m_Name(a_Name)
 			{
 			}
 
-			bool Update(cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw, unsigned int a_MapX, unsigned int a_MapZ, bool a_Spinning)
+			bool Update(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, signed char a_MapX, signed char a_MapZ, bool a_Spinning, const AString & a_Name)
 			{
 				char Rot = m_CurrentRot;
 
@@ -165,13 +167,14 @@ public:
 				m_MapX = a_MapX;
 				m_MapZ = a_MapZ;
 				m_CurrentRot = Rot;
+				m_Name = a_Name;
 
 				return Send;
 			}
 
 			bool Spin(void)
 			{
-				if (m_Icon <= cMap::icon::MAP_ICON_BLUE_ARROW)
+				if (m_Icon <= E_MAP_ICON_BLUE_ARROW)
 				{
 					if ((m_SpinTime == 0) || (--m_SpinTime == 0))
 					{
@@ -182,7 +185,7 @@ public:
 
 					m_Spin += m_SpinRate;
 
-					char Rot = m_Spin / 2;
+					char Rot = (m_Spin / 2) & 0x0f;
 					bool ret = (Rot != m_CurrentRot);
 					m_CurrentRot = Rot;
 
@@ -192,17 +195,19 @@ public:
 				return false;
 			}
 
-			cMap::icon m_Icon;
+			eMapIcon m_Icon;
 
 			Vector3d m_Position;
-			int m_Yaw;
+			double m_Yaw;
 
-			unsigned int m_MapX;
-			unsigned int m_MapZ;
+			signed char m_MapX;
+			signed char m_MapZ;
 
 			char m_CurrentRot;
 
 			char m_Spin, m_SpinTime, m_SpinRate;
+
+			AString m_Name;
 		};
 	};
 
@@ -327,9 +332,9 @@ public:
 		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
 	}
 
-	void AddMarker(UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw)
+	void AddMarker(UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, const AString & a_Name)
 	{
-		AddDecorator(DecoratorType::PERSISTENT, a_Id, a_Icon, a_Position, a_Yaw);
+		AddDecorator(DecoratorType::PERSISTENT, a_Id, a_Icon, a_Position, a_Yaw, a_Name);
 	}
 
 	void RemoveMarker(UInt32 a_Id)
@@ -339,9 +344,16 @@ public:
 
 	// tolua_end
 
-	void AddFrame(UInt32 a_Id, const Vector3d & a_Position, int a_Yaw)
+	void AddBanner(unsigned int a_Colour, const Vector3d & a_Position, const AString & a_Name)
 	{
-		AddDecorator(DecoratorType::FRAME, a_Id, icon::MAP_ICON_GREEN_ARROW, a_Position, a_Yaw);
+		UInt32 Id = DecoratorIdFromPosition(a_Position);
+
+		AddDecorator(DecoratorType::BANNER, Id, BannerColourToIcon(a_Colour), a_Position, 180, a_Name);
+	}
+
+	void AddFrame(UInt32 a_Id, const Vector3d & a_Position, double a_Yaw)
+	{
+		AddDecorator(DecoratorType::FRAME, a_Id, E_MAP_ICON_GREEN_ARROW, a_Position, a_Yaw, "");
 	}
 
 	void RemoveFrame(UInt32 a_Id)
@@ -355,15 +367,27 @@ public:
 
 private:
 
+	static eMapIcon BannerColourToIcon(unsigned int a_Colour)
+	{
+		return static_cast<eMapIcon>(E_MAP_ICON_WHITE_BANNER + 15 - a_Colour);
+	}
+
+	UInt32 DecoratorIdFromPosition(const Vector3d & a_Position) const
+	{
+		unsigned int X = MAP_WIDTH / 2 + (a_Position.x - m_CenterX) / GetPixelWidth();
+		unsigned int Z = MAP_HEIGHT / 2 + (a_Position.z - m_CenterZ) / GetPixelWidth();
+		return (FloorC(a_Position.y) << 16) | (X << 8) | Z;
+	}
+
 	mutable cCriticalSection m_CS;
 
-	/** Update a circular region with the specified radius and center (in pixels). */
-	void UpdateRadius(int a_PixelX, int a_PixelZ, unsigned int a_Radius = DEFAULT_RADIUS);
+	/** Update a circular region around the specified player. */
+	void UpdateRadius(const cPlayer * a_Player);
 
 	/** Update the specified pixel. */
 	bool UpdatePixel(UInt8 a_X, UInt8 a_Z);
 
-	void AddDecorator(DecoratorType a_Type, UInt32 a_Id, cMap::icon a_Icon, const Vector3d & a_Position, int a_Yaw);
+	void AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, const AString a_Name);
 
 	void RemoveDecorator(DecoratorType a_Type, UInt32 a_Id);
 
