@@ -12,8 +12,6 @@ class cItemEmptyMapHandler final:
 {
 	using Super = cItemHandler;
 
-	static const unsigned int DEFAULT_SCALE = 0;
-
 public:
 
 	using Super::Super;
@@ -40,14 +38,12 @@ public:
 		int CenterX = FloorC(a_Player->GetPosX() / RegionWidth) * RegionWidth + (RegionWidth / 2);
 		int CenterZ = FloorC(a_Player->GetPosZ() / RegionWidth) * RegionWidth + (RegionWidth / 2);
 
-		auto NewMap = a_World->GetMapManager().CreateMap(a_HeldItem.m_ItemDamage, CenterX, CenterZ, DEFAULT_SCALE);
-		if (NewMap == nullptr)
+		unsigned short MapID;
+		if (a_World->GetMapManager().CreateMap(MapID, a_HeldItem.m_ItemDamage, CenterX, CenterZ))
 		{
-			return true;
+			// Replace map in the inventory:
+			a_Player->ReplaceOneEquippedItemTossRest(cItem(E_ITEM_MAP, 1, MapID));
 		}
-
-		// Replace map in the inventory:
-		a_Player->ReplaceOneEquippedItemTossRest(cItem(E_ITEM_MAP, 1, static_cast<short>(NewMap->GetID() & 0x7fff)));
 		return true;
 	}
 } ;

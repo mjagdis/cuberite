@@ -36,8 +36,8 @@ public:
 
 	cMapManager(cWorld * a_World);
 
-	/** Creates a new map. Returns nullptr on error */
-	std::shared_ptr<cMap> CreateMap(short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 3);
+	/** Creates a new map. Returns false on error otherwise the new map ID is in a_Map_ID. */
+	bool CreateMap(unsigned short & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 0);
 
 	/** Calls the callback for the map with the specified ID.
 	Returns true if the map was found and the callback called, false if map not found.
