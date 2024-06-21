@@ -34,7 +34,8 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
 	m_FarTrackingThreshold(DEFAULT_FAR_TRACKING_DISTANCE),
 	m_World(a_World),
-	m_Name(fmt::format(FMT_STRING("map_{}"), a_ID))
+	m_Name(fmt::format(FMT_STRING("map_{}"), a_ID)),
+	m_Data { 0, }
 {
 }
 
@@ -59,7 +60,8 @@ cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWo
 	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
 	m_FarTrackingThreshold(DEFAULT_FAR_TRACKING_DISTANCE),
 	m_World(a_World),
-	m_Name(fmt::format(FMT_STRING("map_{}"), a_ID))
+	m_Name(fmt::format(FMT_STRING("map_{}"), a_ID)),
+	m_Data { 0, }
 {
 }
 
@@ -88,6 +90,7 @@ cMap::cMap(unsigned int a_ID, cMap & a_Map):
 	m_TrackingThreshold = a_Map.m_TrackingThreshold;
 	m_FarTrackingThreshold = a_Map.m_FarTrackingThreshold;
 	m_World = a_Map.m_World;
+	memcpy(m_Data, a_Map.m_Data, sizeof(m_Data) / sizeof(m_Data[0]));
 }
 
 
@@ -216,12 +219,6 @@ bool cMap::SetPixel(UInt8 a_X, UInt8 a_Z, ColorID a_Data)
 
 void cMap::UpdateRadius(const cPlayer * a_Player)
 {
-	int PixelWidth = static_cast<int>(GetPixelWidth());
-
-	int PlayerPixelX = static_cast<int>(a_Player->GetPosX() - m_CenterX) / PixelWidth + MAP_WIDTH  / 2;
-	int PlayerPixelZ = static_cast<int>(a_Player->GetPosZ() - m_CenterZ) / PixelWidth + MAP_HEIGHT / 2;
-	int PixelRadius = static_cast<int>(DEFAULT_RADIUS / GetPixelWidth());
-
 	// Scan decorators in this region and remove any non-player, non-manual types that
 	// don't exist, are no longer ticking or have moved.
 	for (auto itr = m_Decorators.begin(); itr != m_Decorators.end();)
@@ -231,26 +228,21 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 
 		if (itr->first.m_Type != DecoratorType::PERSISTENT)
 		{
-			int PixelX = (static_cast<int>(itr->second.m_MapX) - 1) / 2;
-			int PixelZ = (static_cast<int>(itr->second.m_MapZ) - 1) / 2;
-
-			int dX = PixelX - PlayerPixelX;
-			int dZ = PixelZ - PlayerPixelZ;
-
-			int BlockX, BlockZ;
+			int dX = itr->second.m_Position.x - a_Player->GetPosX();
+			int dZ = itr->second.m_Position.z - a_Player->GetPosZ();
 
 			// If it's inside our circle of awareness we'll check it.
-			if ((dX * dX) + (dZ * dZ) < (PixelRadius * PixelRadius))
+			if (static_cast<unsigned int>(FloorC((dX * dX) + (dZ * dZ))) < (DEFAULT_RADIUS * DEFAULT_RADIUS))
 			{
-				BlockX = m_CenterX + GetPixelWidth() * PixelX;
-				BlockZ = m_CenterZ + GetPixelWidth() * PixelZ;
+				int BlockX = FloorC(itr->second.m_Position.x);
+				int BlockZ = FloorC(itr->second.m_Position.z);
 
 				int ChunkX, ChunkZ;
 				cChunkDef::BlockToChunk(BlockX, BlockZ, ChunkX, ChunkZ);
 
 				exists = m_World->DoWithChunk(ChunkX, ChunkZ, [&itr](cChunk & a_Chunk)
 					{
-						// This can be checked so it doesn't exist unless we can find it.
+						// This decorator doesn't exist unless we can find the entity on this specific chunk.
 						bool result = false;
 
 						if ((itr->first.m_Type == DecoratorType::PLAYER) || (itr->first.m_Type == DecoratorType::FRAME))
@@ -258,16 +250,14 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 							a_Chunk.DoWithEntityByID(itr->first.m_Id, [&itr] (cEntity & a_Entity)
 								{
 									// Player markers update as they move so we only need to know
-									// player exists. Frame markers are static until we remove
+									// the player exists. Frame markers are static until we remove
 									// them here and could have been broken and placed elsewhere
 									// since we last checked.
 									bool res = a_Entity.IsPlayer() || ((itr->second.m_Position == a_Entity.GetPosition()) && (itr->second.m_Yaw == a_Entity.GetYaw()));
-									// LOG(fmt::format(FMT_STRING("type={} id={} dpos {}/{} epos {}/{} res {}"), itr->first.m_Type, itr->first.m_Id, itr->second.m_Position, itr->second.m_Yaw, a_Entity.GetPosition(), a_Entity.GetYaw(), res));
 									return res;
 								},
-								result);
-
-							// LOG(fmt::format(FMT_STRING("type={} id={} result {}"), itr->first.m_Type, itr->first.m_Id, result));
+								result
+							);
 						}
 						else if (itr->first.m_Type == DecoratorType::BANNER)
 						{
@@ -292,20 +282,21 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 		}
 		else
 		{
-			// LOG(fmt::format(FMT_STRING("remove decorator type={} id={} icon={} position={} yaw={}"), itr->first.m_Type, itr->first.m_Id, itr->second.m_Icon, itr->second.m_Position, itr->second.m_Yaw));
 			itr = m_Decorators.erase(itr);
 			m_Dirty = true;
 			m_Send = true;
 		}
 	}
 
+	int PlayerPixelX = static_cast<int>(a_Player->GetPosX() - m_CenterX) / GetPixelWidth() + MAP_WIDTH  / 2;
+	int PlayerPixelZ = static_cast<int>(a_Player->GetPosZ() - m_CenterZ) / GetPixelWidth() + MAP_HEIGHT / 2;
+	int PixelRadius = static_cast<int>(DEFAULT_RADIUS / GetPixelWidth());
+
 	UInt8 StartX = static_cast<UInt8>(Clamp(PlayerPixelX - PixelRadius, 0, MAP_WIDTH));
 	UInt8 StartZ = static_cast<UInt8>(Clamp(PlayerPixelZ - PixelRadius, 0, MAP_HEIGHT));
 
 	UInt8 EndX   = static_cast<UInt8>(Clamp(PlayerPixelX + PixelRadius, 0, MAP_WIDTH));
 	UInt8 EndZ   = static_cast<UInt8>(Clamp(PlayerPixelZ + PixelRadius, 0, MAP_HEIGHT));
-
-	// LOG(fmt::format(FMT_STRING("map {} redraw [{}, {}] to [{}, {}]"), m_ID, StartX, StartZ, EndX, EndZ));
 
 	for (UInt8 X = StartX; X < EndX; ++X)
 	{
@@ -494,20 +485,16 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, AString a_Name)
 {
-	int InsideWidth = ((MAP_WIDTH / 2) - 1);
-	int InsideHeight = ((MAP_HEIGHT / 2) - 1);
+	int MapX = FAST_FLOOR_DIV(256.0 * (a_Position.x - GetCenterX()) / GetPixelWidth(), MAP_WIDTH);
+	int MapZ = FAST_FLOOR_DIV(256.0 * (a_Position.z - GetCenterZ()) / GetPixelWidth(), MAP_HEIGHT);
 
-	// Center of pixel
-	int PixelX = (a_Position.x - GetCenterX()) / static_cast<int>(GetPixelWidth());
-	int PixelZ = (a_Position.z - GetCenterZ()) / static_cast<int>(GetPixelWidth());
-
-	if ((PixelX <= -InsideWidth) || (PixelX > InsideWidth) || (PixelZ <= -InsideHeight) || (PixelZ > InsideHeight))
+	if ((MapX < -128) || (MapX > 127) || (MapZ < -128) || (MapZ > 127))
 	{
 		// No decorators outside the map boundaries except for players which can be
 		// clipped to the edges and represented by "outside" and "far outside" icons.
 		if (a_Type != DecoratorType::PLAYER)
 		{
-			LOG(fmt::format(FMT_STRING("Outside borders [{}, {}]"), PixelX, PixelZ));
+			LOG(fmt::format(FMT_STRING("Outside borders [{}, {}]"), MapX, MapZ));
 			return;
 		}
 
@@ -521,12 +508,9 @@ void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, cons
 		}
 
 		// Move to border
-		PixelX = std::clamp(PixelX, -InsideWidth, InsideWidth);
-		PixelZ = std::clamp(PixelZ, -InsideHeight, InsideHeight);
+		MapX = std::clamp(MapX, -128, 127);
+		MapZ = std::clamp(MapZ, -128, 127);
 	}
-
-	signed char MapX = static_cast<signed char>(2 * PixelX + 1);
-	signed char MapZ = static_cast<signed char>(2 * PixelZ + 1);
 
 	// Banner markers have rotation fixed.
 	if (a_Type == DecoratorType::BANNER)
