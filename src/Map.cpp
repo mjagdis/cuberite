@@ -382,7 +382,7 @@ void cMap::UpdateClient(const cPlayer * a_Player, bool a_UpdateMap)
 	{
 		if (m_TrackingPosition && (m_UnlimitedTracking || GetTrackingDistance(a_Player->GetPosition()) <= GetTrackingThreshold() * GetPixelWidth()))
 		{
-			AddDecorator(DecoratorType::PLAYER, a_Player->GetUniqueID(), eMapIcon::E_MAP_ICON_PLAYER, a_Player->GetPosition(), a_Player->GetYaw(), "");
+			AddDecorator(DecoratorType::PLAYER, a_Player->GetUniqueID(), eMapIcon::E_MAP_ICON_WHITE_ARROW, a_Player->GetPosition(), a_Player->GetYaw(), "");
 		}
 		else
 		{
@@ -501,10 +501,10 @@ void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, cons
 		// Bedrock Edition: the pointer remains as an arrow but shrinks until the player
 		// is near the area shown on the map.
 		// FIXME: add a map option (and / or world / server default) to keep using an arrow.
-		a_Icon = eMapIcon::E_MAP_ICON_PLAYER_FAR_OUTSIDE;
+		a_Icon = eMapIcon::E_MAP_ICON_SMALL_WHITE_CIRCLE;
 		if (GetTrackingDistance(a_Position) <= (GetWidth() * GetPixelWidth()) / 2 + GetFarTrackingThreshold())
 		{
-			a_Icon = eMapIcon::E_MAP_ICON_PLAYER_OUTSIDE;
+			a_Icon = eMapIcon::E_MAP_ICON_WHITE_CIRCLE;
 		}
 
 		// Move to border and disable rotation.

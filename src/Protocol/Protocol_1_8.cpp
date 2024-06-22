@@ -2054,14 +2054,14 @@ std::pair<cMap::eMapIcon, UInt8> cProtocol_1_8_0::GetProtocolMapIcon(cMap::eMapI
 {
 	switch (a_Icon)
 	{
-		case cMap::eMapIcon::E_MAP_ICON_PLAYER:
+		case cMap::eMapIcon::E_MAP_ICON_WHITE_ARROW:         // Players
 		case cMap::eMapIcon::E_MAP_ICON_GREEN_ARROW:
 		case cMap::eMapIcon::E_MAP_ICON_RED_ARROW:
 		case cMap::eMapIcon::E_MAP_ICON_BLUE_ARROW:
 		case cMap::eMapIcon::E_MAP_ICON_WHITE_CROSS:
-		case cMap::eMapIcon::E_MAP_ICON_RED_POINTER:
-		case cMap::eMapIcon::E_MAP_ICON_PLAYER_OUTSIDE:
-		case cMap::eMapIcon::E_MAP_ICON_PLAYER_FAR_OUTSIDE:
+		case cMap::eMapIcon::E_MAP_ICON_RED_TRIANGLE:
+		case cMap::eMapIcon::E_MAP_ICON_WHITE_CIRCLE:        // Off-map players
+		case cMap::eMapIcon::E_MAP_ICON_SMALL_WHITE_CIRCLE:  // Far-off-map players
 		case cMap::eMapIcon::E_MAP_ICON_MANSION:
 		case cMap::eMapIcon::E_MAP_ICON_MONUMENT:
 		{
@@ -2074,7 +2074,7 @@ std::pair<cMap::eMapIcon, UInt8> cProtocol_1_8_0::GetProtocolMapIcon(cMap::eMapI
 		case cMap::eMapIcon::E_MAP_ICON_YELLOW_BANNER:
 		case cMap::eMapIcon::E_MAP_ICON_LIGHT_GRAY_BANNER:
 		{
-			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_PLAYER, a_Rot + 8);
+			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_WHITE_ARROW, a_Rot + 8);
 		}
 		case cMap::eMapIcon::E_MAP_ICON_ORANGE_BANNER:
 		case cMap::eMapIcon::E_MAP_ICON_MAGENTA_BANNER:
@@ -2111,7 +2111,7 @@ std::pair<cMap::eMapIcon, UInt8> cProtocol_1_8_0::GetProtocolMapIcon(cMap::eMapI
 	}
 
 	// We have no clue how to represent this so just use a small, white circle.
-	return std::make_pair(cMap::eMapIcon::E_MAP_ICON_PLAYER_FAR_OUTSIDE, 0);
+	return std::make_pair(cMap::eMapIcon::E_MAP_ICON_SMALL_WHITE_CIRCLE, 0);
 }
 
 
