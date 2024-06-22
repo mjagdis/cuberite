@@ -56,17 +56,18 @@ class cMap :
 public:
 	enum eMapIcon
 	{
-		E_MAP_ICON_PLAYER             = 0,
+		E_MAP_ICON_WHITE_ARROW        = 0,  ///< Used for players.
 		E_MAP_ICON_GREEN_ARROW        = 1,  ///< Used for item frames.
 		E_MAP_ICON_RED_ARROW          = 2,
 		E_MAP_ICON_BLUE_ARROW         = 3,
 		E_MAP_ICON_WHITE_CROSS        = 4,
-		E_MAP_ICON_RED_POINTER        = 5,
-		E_MAP_ICON_PLAYER_OUTSIDE     = 6,  ///< Player outside of the boundaries of the map.
-		E_MAP_ICON_PLAYER_FAR_OUTSIDE = 7,  ///< Player far outside of the boundaries of the map.
+		E_MAP_ICON_RED_TRIANGLE       = 5,
+		E_MAP_ICON_WHITE_CIRCLE       = 6,  ///< Player outside the boundaries of the map.
+		E_MAP_ICON_SMALL_WHITE_CIRCLE = 7,  ///< Player far outside the boundaries of the map.
 		E_MAP_ICON_MANSION            = 8,
 		E_MAP_ICON_MONUMENT           = 9,
 
+		// Banners and above are Java Edition 1.13+, not present in Bedrock
 		E_MAP_ICON_WHITE_BANNER       = 10,
 		E_MAP_ICON_ORANGE_BANNER      = 11,
 		E_MAP_ICON_MAGENTA_BANNER     = 12,
@@ -84,7 +85,21 @@ public:
 		E_MAP_ICON_RED_BANNER         = 24,
 		E_MAP_ICON_BLACK_BANNER       = 25,
 
-		E_MAP_ICON_TREASURE_MARKER    = 26,
+		E_MAP_ICON_TREASURE_MARKER    = 26,  // aka red cross
+
+		// Other markers in Java / Bedrock Edition versions beyond what we support
+		// E_MAP_ICON_DESERT_VILLAGE  = 27,
+		// E_MAP_ICON_PLAINS_VILLAGE  = 28,
+		// E_MAP_ICON_SAVANNA_VILLAGE = 29,
+		// E_MAP_ICON_SNOWY_VILLAGE   = 30,
+		// E_MAP_ICON_TAIGA_VILLAGE   = 31,
+		// E_MAP_ICON_JUNGLE_PYRAMID  = 32,
+		// E_MAP_ICON_SWAMP_HUT       = 33,
+		// E_MAP_ICON_MAGENTA_ARROW   = xx,  // Bedrock only, unused
+		// E_MAP_ICON_ORANGE_ARROW    = xx,  // Bedrock only, unused
+		// E_MAP_ICON_YELLOW_ARROW    = xx,  // Bedrock only, unused
+		// E_MAP_ICON_CYAN_ARROW      = xx,  // Bedrock only, unused
+		// E_MAP_ICON_GREEN_TRIANGLE  = xx,  // Bedrock only, stronghold, fortress, etc. on an explorer map
 	};
 
 	// tolua_end
