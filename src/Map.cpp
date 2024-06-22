@@ -507,9 +507,10 @@ void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, cons
 			a_Icon = eMapIcon::E_MAP_ICON_PLAYER_OUTSIDE;
 		}
 
-		// Move to border
+		// Move to border and disable rotation.
 		MapX = std::clamp(MapX, -128, 127);
 		MapZ = std::clamp(MapZ, -128, 127);
+		a_Yaw = 180;
 	}
 
 	// Banner markers have rotation fixed.
