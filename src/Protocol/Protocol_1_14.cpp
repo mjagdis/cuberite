@@ -186,6 +186,7 @@ void cProtocol_1_14::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a
 	cPacketizer Pkt(*this, pktMapData);
 	Pkt.WriteVarInt32(a_Map.GetID());
 	Pkt.WriteBEUInt8(static_cast<UInt8>(a_Map.GetScale()));
+	Pkt.WriteBool(a_Map.GetTrackingPosition());
 	Pkt.WriteBool(a_Map.GetLocked());
 
 	Pkt.WriteVarInt32(static_cast<UInt32>(a_Map.GetDecorators().size()));
