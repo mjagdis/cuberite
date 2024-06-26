@@ -12,29 +12,11 @@
 
 
 
-// 6000 ticks or 5 minutes
-#define MAP_DATA_SAVE_INTERVAL 6000
-
-
-
-
-
 cCriticalSection cMapManager::m_CS;
 
 unsigned int cMapManager::m_NextID = 0;
 
 cMapManager::cMapList cMapManager::m_MapData;
-
-
-
-
-
-cMapManager::cMapManager(cWorld * a_World) :
-	m_World(a_World),
-	m_TicksUntilNextSave(MAP_DATA_SAVE_INTERVAL)
-{
-	ASSERT(m_World != nullptr);
-}
 
 
 
@@ -99,7 +81,7 @@ std::shared_ptr<cMap> cMapManager::GetMapData(unsigned int a_ID)
 
 
 
-bool cMapManager::CreateMap(unsigned short & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
+bool cMapManager::CreateMap(unsigned int & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
 {
 	cCSLock Lock(m_CS);
 

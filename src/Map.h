@@ -144,17 +144,17 @@ public:
 		class Value
 		{
 		private:
-			static char YawToRot(double a_Yaw)
+			static UInt8 YawToRot(double a_Yaw)
 			{
 				return CeilC(((a_Yaw - 11.25) * 16) / 360) & 0x0f;
 			}
 
 		public:
 
-			Value(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, signed char a_MapX, signed char a_MapZ, const AString & a_Name) :
+			Value(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, Int8 a_MapX, Int8 a_MapZ, const AString & a_Name) :
 				m_Icon(a_Icon),
-				m_Position(a_Position),
-				m_Yaw(a_Yaw),
+				m_Position(a_Position.Floor()),
+				m_Yaw(FloorC(a_Yaw)),
 				m_MapX(a_MapX),
 				m_MapZ(a_MapZ),
 				m_CurrentRot(YawToRot(a_Yaw)),
@@ -165,9 +165,9 @@ public:
 			{
 			}
 
-			bool Update(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, signed char a_MapX, signed char a_MapZ, bool a_Spinning, const AString & a_Name)
+			bool Update(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, Int8 a_MapX, Int8 a_MapZ, bool a_Spinning, const AString & a_Name)
 			{
-				char Rot = m_CurrentRot;
+				UInt8 Rot = m_CurrentRot;
 
 				if (!a_Spinning)
 				{
@@ -177,8 +177,8 @@ public:
 				if ((a_MapX != m_MapX) || (a_MapZ != m_MapZ) || (Rot != m_CurrentRot) || (a_Icon != m_Icon) || m_Name.compare(a_Name))
 				{
 					m_Icon = a_Icon;
-					m_Position = a_Position;
-					m_Yaw = a_Yaw;
+					m_Position = a_Position.Floor();
+					m_Yaw = FloorC(a_Yaw);
 					m_MapX = a_MapX;
 					m_MapZ = a_MapZ;
 					m_CurrentRot = Rot;
@@ -195,14 +195,14 @@ public:
 				{
 					if ((m_SpinTime == 0) || (--m_SpinTime == 0))
 					{
-						m_SpinRate = 1 + GetRandomProvider().RandInt(3);
-						m_SpinTime = 8 + GetRandomProvider().RandInt(12) / m_SpinRate;
+						m_SpinRate = 1 + GetRandomProvider().RandInt<Int8>(3);
+						m_SpinTime = 8 + GetRandomProvider().RandInt<UInt8>(12) / static_cast<UInt8>(m_SpinRate);
 						m_SpinRate = (GetRandomProvider().RandInt(1) > 0 ? m_SpinRate : -m_SpinRate);
 					}
 
 					m_Spin += m_SpinRate;
 
-					char Rot = (m_Spin / 2) & 0x0f;
+					UInt8 Rot = (m_Spin / 2) & 0x0f;
 					bool ret = (Rot != m_CurrentRot);
 					m_CurrentRot = Rot;
 
@@ -214,15 +214,16 @@ public:
 
 			eMapIcon m_Icon;
 
-			Vector3d m_Position;
-			double m_Yaw;
+			Vector3i m_Position;
+			int m_Yaw;
 
-			signed char m_MapX;
-			signed char m_MapZ;
+			Int8 m_MapX;
+			Int8 m_MapZ;
 
-			char m_CurrentRot;
+			UInt8 m_CurrentRot;
 
-			char m_Spin, m_SpinTime, m_SpinRate;
+			UInt8 m_Spin, m_SpinTime;
+			Int8 m_SpinRate;
 
 			AString m_Name;
 		};
@@ -230,9 +231,9 @@ public:
 
 	static const int MAP_WIDTH = 128;
 	static const int MAP_HEIGHT = 128;
-	static const unsigned int DEFAULT_RADIUS = 128;
-	static const unsigned int DEFAULT_TRACKING_DISTANCE = 320;
-	static const unsigned int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
+	static const int DEFAULT_RADIUS = 128;
+	static const int DEFAULT_TRACKING_DISTANCE = 320;
+	static const int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
 
 	// tolua_begin
 
@@ -314,8 +315,8 @@ public:
 		return ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT)) ? m_Data[a_Z * MAP_WIDTH + a_X] : 0;
 	}
 
-	unsigned int GetWidth (void) const { return MAP_WIDTH;  }
-	unsigned int GetHeight(void) const { return MAP_HEIGHT; }
+	int GetWidth (void) const { return MAP_WIDTH;  }
+	int GetHeight(void) const { return MAP_HEIGHT; }
 
 	unsigned int GetScale(void) const { return m_Scale; }
 
@@ -332,7 +333,7 @@ public:
 
 	unsigned int GetNumPixels(void) const { return MAP_WIDTH * MAP_HEIGHT; }
 
-	unsigned int GetPixelWidth(void) const { return 1 << m_Scale; }
+	int GetPixelWidth(void) const { return 1 << m_Scale; }
 
 	bool GetLocked(void) const { return m_Locked; }
 
@@ -346,7 +347,7 @@ public:
 
 	unsigned int GetTrackingDistance(const Vector3d & a_Position) const
 	{
-		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
+		return std::max(abs(FloorC(a_Position.x) - m_CenterX), abs(FloorC(a_Position.z) - m_CenterZ));
 	}
 
 	void AddMarker(UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, const AString & a_Name)
@@ -378,6 +379,8 @@ public:
 		RemoveDecorator(DecoratorType::FRAME, a_Id);
 	}
 
+	void RemoveFrame(const Vector3d & a_Position, double a_Yaw);
+
 	const cMapDecoratorList GetDecorators(void) const { return m_Decorators; }
 
 	void AddClient(cClientHandle * a_Client) { m_ClientsInCurrentTick.emplace(a_Client); }
@@ -391,9 +394,9 @@ private:
 
 	UInt32 DecoratorIdFromPosition(const Vector3d & a_Position) const
 	{
-		unsigned int X = MAP_WIDTH / 2 + (a_Position.x - m_CenterX) / GetPixelWidth();
-		unsigned int Z = MAP_HEIGHT / 2 + (a_Position.z - m_CenterZ) / GetPixelWidth();
-		return (FloorC(a_Position.y) << 16) | (X << 8) | Z;
+		int X = MAP_WIDTH / 2 + (FloorC(a_Position.x) - m_CenterX) / GetPixelWidth();
+		int Z = MAP_HEIGHT / 2 + (FloorC(a_Position.z) - m_CenterZ) / GetPixelWidth();
+		return static_cast<UInt32>((FloorC(a_Position.y) * 65536) | (X * 256) | Z);
 	}
 
 	mutable cCriticalSection m_CS;

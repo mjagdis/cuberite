@@ -18,30 +18,30 @@
 
 namespace
 {
-	const AString ColourName[] =
+	const char * ColourName[] =
 	{
-		AString("white"),
-		AString("orange"),
-		AString("magenta"),
-		AString("light_blue"),
-		AString("yellow"),
-		AString("lime"),
-		AString("pink"),
-		AString("gray"),
-		AString("light_gray"),
-		AString("cyan"),
-		AString("purple"),
-		AString("blue"),
-		AString("brown"),
-		AString("green"),
-		AString("red"),
-		AString("black")
+		"white",
+		"orange",
+		"magenta",
+		"light_blue",
+		"yellow",
+		"lime",
+		"pink",
+		"gray",
+		"light_gray",
+		"cyan",
+		"purple",
+		"blue",
+		"brown",
+		"green",
+		"red",
+		"black"
 	};
 
 
 
 
-	const AString ColourToName(int a_Colour)
+	const char * ColourToName(int a_Colour)
 	{
 		return ColourName[a_Colour & 0x0f];
 	}
@@ -50,11 +50,11 @@ namespace
 
 
 
-	int ColourFromName(const AString a_Name)
+	unsigned int ColourFromName(const AString a_Name)
 	{
 		for (unsigned int i = 0; i < sizeof(ColourName) / sizeof(ColourName[0]); i++)
 		{
-			if (!ColourName[i].compare(a_Name))
+			if (!a_Name.compare(ColourName[i]))
 			{
 				return i;
 			}
@@ -402,7 +402,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 		for (int Banner = a_NBT.GetFirstChild(Banners); Banner >= 0; Banner = a_NBT.GetNextSibling(Banner))
 		{
 			Vector3d Position;
-			int Colour = 0;
+			unsigned int Colour = 0;
 			AString Name = "";
 
 			// The decoration structure changed somewhat arbitrarily (IMHO) in Java Edition 1.20.
@@ -500,9 +500,9 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 	if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_ByteArray) && (a_NBT.GetDataLength(CurrLine) == m_Map->GetNumPixels()))
 	{
 		const Byte * data = reinterpret_cast<const Byte *>(a_NBT.GetData(CurrLine));
-		for (unsigned int y = 0; y < m_Map->MAP_HEIGHT; y++)
+		for (UInt8 y = 0; y < m_Map->MAP_HEIGHT; y++)
 		{
-			for (unsigned int x = 0; x < m_Map->MAP_WIDTH; x++)
+			for (UInt8 x = 0; x < m_Map->MAP_WIDTH; x++)
 			{
 				m_Map->SetPixel(x, y, data[y * m_Map->MAP_WIDTH + x]);
 			}
