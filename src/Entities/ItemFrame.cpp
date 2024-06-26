@@ -108,7 +108,11 @@ void cItemFrame::OnRightClicked(cPlayer & a_Player)
 	{
 		GetWorld()->GetMapManager().DoWithMap(static_cast<unsigned>(m_Item.m_ItemDamage), [this](cMap & a_Map)
 			{
-				a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
+				if (a_Map.GetWorld() == GetWorld())
+				{
+					a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
+				}
+
 				return true;
 			}
 		);
@@ -134,12 +138,13 @@ void cItemFrame::SpawnOn(cClientHandle & a_ClientHandle)
 			{
 				if (a_Map.GetWorld() == GetWorld())
 				{
-					// Make sure the frame marker exists on the map. Before Java Edition 1.13
-					// saved map files didn't contain decorators and relied on item frames being
-					// spawned in when chunks were loaded meaning item frames were missing on
-					// newly loaded maps until the area had been visited.
-					// N.B. Cuberite saves markers so this is only necessary to support saves
-					// from pre-1.13 Java Edition.
+					// Item IDs are dynamic and item entities may occupy the same block as
+					// each other. We may already have a marker for this frame (from a save
+					// or a spawn due to a past visit to the area by a player) but if so
+					// it will have the same position and yaw as we have (different item
+					// frames at the same position will always be facing in different
+					// directions). We don't want the old marker any more.
+					a_Map.RemoveFrame(GetPosition(), GetYaw());
 					a_Map.AddFrame(GetUniqueID(), GetPosition(), GetYaw());
 				}
 

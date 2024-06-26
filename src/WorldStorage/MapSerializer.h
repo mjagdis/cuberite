@@ -72,16 +72,16 @@ public:
 	/** Try to save the ID counts */
 	bool Save(void);
 
-	inline unsigned int GetMapCount(void) const { return m_MapCount; }
+	inline UInt32 GetMapCount(void) const { return m_MapCount; }
 
-	inline void SetMapCount(unsigned int a_MapCount) { m_MapCount = a_MapCount; }
+	inline void SetMapCount(UInt32 a_MapCount) { m_MapCount = a_MapCount; }
 
 
 private:
 
 	AString m_Path;
 
-	unsigned int m_MapCount;
+	UInt32 m_MapCount;
 
 };
 

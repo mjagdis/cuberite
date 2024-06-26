@@ -52,11 +52,15 @@ public:
 		int CenterX = FloorC(a_Player->GetPosX() / RegionWidth) * RegionWidth + (RegionWidth / 2);
 		int CenterZ = FloorC(a_Player->GetPosZ() / RegionWidth) * RegionWidth + (RegionWidth / 2);
 
-		unsigned short MapID;
+		unsigned int MapID;
 		if (a_World->GetMapManager().CreateMap(MapID, a_HeldItem.m_ItemDamage, CenterX, CenterZ))
 		{
-			// Replace map in the inventory:
-			a_Player->ReplaceOneEquippedItemTossRest(cItem(E_ITEM_MAP, 1, MapID));
+			// At the moment we are restricted to 16 bit map IDs because it is stored as damage on the item.
+			if (MapID <= 65535)
+			{
+				// Replace map in the inventory.
+				a_Player->ReplaceOneEquippedItemTossRest(cItem(E_ITEM_MAP, 1, static_cast<short>(MapID)));
+			}
 		}
 
 		return true;

@@ -2103,11 +2103,6 @@ std::pair<cMap::eMapIcon, UInt8> cProtocol_1_8_0::GetProtocolMapIcon(cMap::eMapI
 		{
 			return std::make_pair(cMap::eMapIcon::E_MAP_ICON_WHITE_CROSS, 0);
 		}
-
-		default:
-		{
-			break;
-		}
 	}
 
 	// We have no clue how to represent this so just use a small, white circle.

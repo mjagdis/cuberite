@@ -27,17 +27,29 @@ using cMapCallback = cFunctionRef<bool(cMap &)>;
 /** Manages the in-game maps of a single world - Thread safe. */
 class cMapManager
 {
+	// tolua_end
+
+private:
+
+	const unsigned int MAP_DATA_SAVE_INTERVAL = 6000;  // 6000 ticks or 5 minutes
+
 public:
+	// tolua_begin
+
 	/** Creates a new map with the same contents as an existing map.
 	Returns the new map or nullptr if no more maps can be created. */
 	std::shared_ptr<cMap> CopyMap(cMap & a_OldMap);
 
 	// tolua_end
 
-	cMapManager(cWorld * a_World);
+	constexpr cMapManager(cWorld * a_World):
+		m_World(a_World),
+		m_TicksUntilNextSave(MAP_DATA_SAVE_INTERVAL)
+	{
+	}
 
 	/** Creates a new map. Returns false on error otherwise the new map ID is in a_Map_ID. */
-	bool CreateMap(unsigned short & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 0);
+	bool CreateMap(unsigned int & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 0);
 
 	/** Calls the callback for the map with the specified ID.
 	Returns true if the map was found and the callback called, false if map not found.

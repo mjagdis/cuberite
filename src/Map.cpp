@@ -1,6 +1,8 @@
 
 // Map.cpp
 
+#include <cstdint>
+
 #include "Globals.h"
 
 #include "BlockEntities/BannerEntity.h"
@@ -228,11 +230,11 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 
 		if (itr->first.m_Type != DecoratorType::PERSISTENT)
 		{
-			int dX = itr->second.m_Position.x - a_Player->GetPosX();
-			int dZ = itr->second.m_Position.z - a_Player->GetPosZ();
+			int dX = FloorC(itr->second.m_Position.x - a_Player->GetPosX());
+			int dZ = FloorC(itr->second.m_Position.z - a_Player->GetPosZ());
 
 			// If it's inside our circle of awareness we'll check it.
-			if (static_cast<unsigned int>(FloorC((dX * dX) + (dZ * dZ))) < (DEFAULT_RADIUS * DEFAULT_RADIUS))
+			if ((dX * dX) + (dZ * dZ) < DEFAULT_RADIUS * DEFAULT_RADIUS)
 			{
 				int BlockX = FloorC(itr->second.m_Position.x);
 				int BlockZ = FloorC(itr->second.m_Position.z);
@@ -247,13 +249,13 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 
 						if ((itr->first.m_Type == DecoratorType::PLAYER) || (itr->first.m_Type == DecoratorType::FRAME))
 						{
+							// Player markers update as they move so we only need to know
+							// the player exists. Frame markers are static until we remove
+							// them here and could have been broken and placed elsewhere
+							// since we last checked.
 							a_Chunk.DoWithEntityByID(itr->first.m_Id, [&itr] (cEntity & a_Entity)
 								{
-									// Player markers update as they move so we only need to know
-									// the player exists. Frame markers are static until we remove
-									// them here and could have been broken and placed elsewhere
-									// since we last checked.
-									bool res = a_Entity.IsPlayer() || ((itr->second.m_Position == a_Entity.GetPosition()) && (itr->second.m_Yaw == a_Entity.GetYaw()));
+									bool res = a_Entity.IsPlayer() || (itr->second.m_Position == (a_Entity.GetPosition().Floor()) && (std::abs(itr->second.m_Yaw - a_Entity.GetYaw()) < 22.5));
 									return res;
 								},
 								result
@@ -282,6 +284,7 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 		}
 		else
 		{
+			// LOG(fmt::format(FMT_STRING("map {} del marker type {} id {} icon {} pos {} yaw {} mapx {} mapz {}"), m_ID, itr->first.m_Type, itr->first.m_Id, itr->second.m_Icon, itr->second.m_Position, itr->second.m_Yaw, itr->second.m_MapX, itr->second.m_MapZ));
 			itr = m_Decorators.erase(itr);
 			m_Dirty = true;
 			m_Send = true;
@@ -290,7 +293,7 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 
 	int PlayerPixelX = static_cast<int>(a_Player->GetPosX() - m_CenterX) / GetPixelWidth() + MAP_WIDTH  / 2;
 	int PlayerPixelZ = static_cast<int>(a_Player->GetPosZ() - m_CenterZ) / GetPixelWidth() + MAP_HEIGHT / 2;
-	int PixelRadius = static_cast<int>(DEFAULT_RADIUS / GetPixelWidth());
+	int PixelRadius = DEFAULT_RADIUS / GetPixelWidth();
 
 	UInt8 StartX = static_cast<UInt8>(Clamp(PlayerPixelX - PixelRadius, 0, MAP_WIDTH));
 	UInt8 StartZ = static_cast<UInt8>(Clamp(PlayerPixelZ - PixelRadius, 0, MAP_HEIGHT));
@@ -485,10 +488,10 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, AString a_Name)
 {
-	int MapX = FAST_FLOOR_DIV(256.0 * (a_Position.x - GetCenterX()) / GetPixelWidth(), MAP_WIDTH);
-	int MapZ = FAST_FLOOR_DIV(256.0 * (a_Position.z - GetCenterZ()) / GetPixelWidth(), MAP_HEIGHT);
+	int MapX = static_cast<int>(FAST_FLOOR_DIV(256.0 * (a_Position.x - GetCenterX()) / GetPixelWidth(), MAP_WIDTH));
+	int MapZ = static_cast<int>(FAST_FLOOR_DIV(256.0 * (a_Position.z - GetCenterZ()) / GetPixelWidth(), MAP_HEIGHT));
 
-	if ((MapX < -128) || (MapX > 127) || (MapZ < -128) || (MapZ > 127))
+	if ((MapX < INT8_MIN) || (MapX > INT8_MAX) || (MapZ < INT8_MIN) || (MapZ > INT8_MAX))
 	{
 		// No decorators outside the map boundaries except for players which can be
 		// clipped to the edges and represented by "outside" and "far outside" icons.
@@ -508,46 +511,56 @@ void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, cons
 		}
 
 		// Move to border and disable rotation.
-		MapX = std::clamp(MapX, -128, 127);
-		MapZ = std::clamp(MapZ, -128, 127);
-		a_Yaw = 180;
+		MapX = std::clamp(MapX, INT8_MIN, INT8_MAX);
+		MapZ = std::clamp(MapZ, INT8_MIN, INT8_MAX);
+		a_Yaw = 180.0;
 	}
 
 	// Banner markers have rotation fixed.
 	if (a_Type == DecoratorType::BANNER)
 	{
-		a_Yaw = 180;
+		a_Yaw = 180.0;
 	}
 
-	// Players and persistent (placed by plugins) markers are movable. Others (item frames
-	// and banners) are simply added and only removed when a region redraw notes that they
-	// are no longer present. However the banner at a particular location could have been
-	// replaced with one of a different colour. Since banner IDs are generated internally
-	// based on their position we can simply treat banners as "movable" (they never move but
-	// their colour / icon could be different). Therefore only item frames aren't updatable.
+	// We know the map coords fit in an Int8. Let's avoid warnings about narrowing.
+	Int8 MapX8 = static_cast<Int8>(MapX);
+	Int8 MapZ8 = static_cast<Int8>(MapZ);
+
 	if (a_Type != DecoratorType::FRAME)
 	{
+		// Players and persistent (placed by plugins) markers are movable. Others (item frames
+		// and banners) are simply added and only removed when a region redraw notes that they
+		// are no longer present. However the banner at a particular location could have been
+		// replaced with one of a different colour. Since banner IDs are generated internally
+		// based on their position we can simply treat banners as "movable" (they never move but
+		// their colour / icon could be different). Therefore only item frames aren't updatable.
 		auto itr = m_Decorators.find({ a_Type, a_Id });
 		if (itr != m_Decorators.end())
 		{
-			// The map needs SAVING if there are changes to the decorator.
-			m_Dirty |= (a_Position != itr->second.m_Position) || (a_Yaw != itr->second.m_Yaw) || (a_Icon != itr->second.m_Icon);
+			bool Changes = itr->second.Update(a_Icon, a_Position, a_Yaw, MapX8, MapZ8, (m_World->GetDimension() == dimNether), a_Name);
 
-			// The map needs SENDING if there are changes to the decorator's representation on the map.
-			m_Send |= itr->second.Update(a_Icon, a_Position, a_Yaw, MapX, MapZ, (m_World->GetDimension() == dimNether), a_Name);
+			// The map needs sending if the representation of the decorator changed.
+			m_Send |= Changes;
+
+			// The map needs saving if there were changes to a non-player marker and
+			// the position of the marked entity has changed by at least a block.
+			m_Dirty |= (Changes && (a_Type != DecoratorType::PLAYER) && !itr->second.m_Position.EqualsEps(a_Position, 1.0));
+
 			return;
 		}
 	}
 
 	m_Decorators.emplace(std::piecewise_construct,
 		std::forward_as_tuple(a_Type, a_Id),
-		std::forward_as_tuple(a_Icon, a_Position, a_Yaw, MapX, MapZ, a_Name));
+		std::forward_as_tuple(a_Icon, a_Position, a_Yaw, MapX8, MapZ8, a_Name));
 
 	// If we placed a new decorator the map needs sending...
 	m_Send = true;
 
 	// ...and saving if the decorator wasn't a player marker.
-	m_Dirty = (a_Type != DecoratorType::PLAYER);
+	m_Dirty |= (a_Type != DecoratorType::PLAYER);
+
+	// LOG(fmt::format(FMT_STRING("map {} add marker type {} id {} icon {} pos {} yaw {} mapx {} mapz {} send {} dirty {}"), m_ID, a_Type, a_Id, a_Icon, a_Position, a_Yaw, MapX8, MapZ8, m_Send, m_Dirty));
 }
 
 
@@ -570,3 +583,17 @@ void cMap::RemoveDecorator(cMap::DecoratorType a_Type, UInt32 a_Id)
 
 
 
+void cMap::RemoveFrame(const Vector3d & a_Position, double a_Yaw)
+{
+	Vector3i Position = a_Position.Floor();
+
+	for (auto itr = m_Decorators.begin(); itr != m_Decorators.end(); ++itr)
+	{
+		if ((itr->first.m_Type == DecoratorType::FRAME) && (itr->second.m_Position == Position) && (itr->second.m_Yaw == a_Yaw))
+		{
+			// There should be only one.
+			m_Decorators.erase(itr);
+			break;
+		}
+	}
+}
