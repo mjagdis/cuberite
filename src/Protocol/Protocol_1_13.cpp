@@ -46,7 +46,7 @@ Implements the 1.13 protocol classes:
 ////////////////////////////////////////////////////////////////////////////////
 // cProtocol_1_13:
 
-void cProtocol_1_13::SendBlockChange(Vector3i a_BlockPos, BLOCKTYPE a_BlockType, NIBBLETYPE a_BlockMeta)
+void cProtocol_1_13::SendBlockChange(Vector3i a_BlockPos, BLOCKTYPE a_BlockType, BLOCKMETATYPE a_BlockMeta)
 {
 	cPacketizer Pkt(*this, pktBlockChange);
 	Pkt.WriteXYZPosition64(a_BlockPos);
@@ -502,7 +502,7 @@ UInt32 cProtocol_1_13::GetPacketID(ePacketType a_PacketType) const
 
 
 
-UInt32 cProtocol_1_13::GetProtocolBlockType(BLOCKTYPE a_BlockType, NIBBLETYPE a_Meta) const
+UInt32 cProtocol_1_13::GetProtocolBlockType(BLOCKTYPE a_BlockType, BLOCKMETATYPE a_Meta) const
 {
 	return Palette_1_13::From(PaletteUpgrade::FromBlock(a_BlockType, a_Meta));
 }
@@ -1668,7 +1668,7 @@ std::pair<short, short> cProtocol_1_13_1::GetItemFromProtocolID(UInt32 a_Protoco
 
 
 
-UInt32 cProtocol_1_13_1::GetProtocolBlockType(BLOCKTYPE a_BlockType, NIBBLETYPE a_Meta) const
+UInt32 cProtocol_1_13_1::GetProtocolBlockType(BLOCKTYPE a_BlockType, BLOCKMETATYPE a_Meta) const
 {
 	return Palette_1_13_1::From(PaletteUpgrade::FromBlock(a_BlockType, a_Meta));
 }
