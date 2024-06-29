@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockEntity.h"
+#include "Map.h"
 
 
 
@@ -22,16 +23,6 @@ private:
 	{
 		// Drops handled by the block entity:
 		return {};
-	}
-
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
 	}
 } ;
 

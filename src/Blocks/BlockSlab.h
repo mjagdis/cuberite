@@ -11,6 +11,7 @@
 
 #include "BlockHandler.h"
 #include "ChunkInterface.h"
+#include "Map.h"
 #include "../BlockInfo.h"
 #include "../Entities/Player.h"
 #include "../BlockInfo.h"
@@ -112,18 +113,18 @@ private:
 			{
 				switch (a_Meta)
 				{
-					case E_META_STONE_SLAB_SANDSTONE: return 2;
-					case E_META_STONE_SLAB_PLANKS: return 13;
+					case E_META_STONE_SLAB_SANDSTONE: return cMap::eMapColor::E_MAP_COLOR_SAND;
+					case E_META_STONE_SLAB_PLANKS: return cMap::eMapColor::E_MAP_COLOR_WOOD;
 					case E_META_STONE_SLAB_STONE_BRICK:
 					case E_META_STONE_SLAB_STONE:
-					case E_META_STONE_SLAB_COBBLESTONE: return 11;
-					case E_META_STONE_SLAB_BRICK: return 28;
-					case E_META_STONE_SLAB_NETHER_BRICK: return 35;
-					case E_META_STONE_SLAB_QUARTZ: return 8;
+					case E_META_STONE_SLAB_COBBLESTONE: return cMap::eMapColor::E_MAP_COLOR_STONE;
+					case E_META_STONE_SLAB_BRICK: return cMap::eMapColor::E_MAP_COLOR_TERRACOTTA;
+					case E_META_STONE_SLAB_NETHER_BRICK: return cMap::eMapColor::E_MAP_COLOR_NETHER;
+					case E_META_STONE_SLAB_QUARTZ: return cMap::eMapColor::E_MAP_COLOR_QUARTZ;
 					default:
 					{
 						ASSERT(!"Unhandled meta in slab handler!");
-						return 0;
+						return cMap::eMapColor::E_MAP_COLOR_STONE;
 					}
 				}
 			}
@@ -131,31 +132,31 @@ private:
 			{
 				switch (a_Meta)
 				{
-					case E_META_WOODEN_SLAB_BIRCH: return 2;
-					case E_META_WOODEN_SLAB_JUNGLE: return 10;
-					case E_META_WOODEN_SLAB_OAK: return 13;
-					case E_META_WOODEN_SLAB_ACACIA: return 15;
-					case E_META_WOODEN_SLAB_DARK_OAK: return 26;
-					case E_META_WOODEN_SLAB_SPRUCE: return 34;
+					case E_META_WOODEN_SLAB_BIRCH: return cMap::eMapColor::E_MAP_COLOR_BIRCH;
+					case E_META_WOODEN_SLAB_JUNGLE: return cMap::eMapColor::E_MAP_COLOR_JUNGLE;
+					case E_META_WOODEN_SLAB_OAK: return cMap::eMapColor::E_MAP_COLOR_OAK;
+					case E_META_WOODEN_SLAB_ACACIA: return cMap::eMapColor::E_MAP_COLOR_ACACIA;
+					case E_META_WOODEN_SLAB_DARK_OAK: return cMap::eMapColor::E_MAP_COLOR_DARK_OAK;
+					case E_META_WOODEN_SLAB_SPRUCE: return cMap::eMapColor::E_MAP_COLOR_SPRUCE;
 					default:
 					{
 						ASSERT(!"Unhandled meta in slab handler!");
-						return 0;
+						return cMap::eMapColor::E_MAP_COLOR_WOOD;
 					}
 				}
 			}
 			case E_BLOCK_RED_SANDSTONE_SLAB:
 			{
-				return 10;
+				return cMap::eMapColor::E_MAP_COLOR_ORANGE;
 			}
 			case E_BLOCK_PURPUR_SLAB:
 			{
-				return 16;
+				return cMap::eMapColor::E_MAP_COLOR_MAGENTA;
 			}
 			default:
 			{
 				ASSERT(!"Unhandled blocktype in slab handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_STONE;
 			}
 		}
 	}

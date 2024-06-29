@@ -1,6 +1,7 @@
 #include "Globals.h"
 
 #include "BlockHandler.h"
+#include "Map.h"
 #include "../Item.h"
 #include "../World.h"
 #include "../Chunk.h"
@@ -583,8 +584,8 @@ void cBlockHandler::Check(
 
 ColourID cBlockHandler::GetMapBaseColourID(NIBBLETYPE a_Meta) const
 {
-	// Zero for transparent
-	return 0;
+	UNUSED(a_Meta);
+	return cMap::eMapColor::E_MAP_COLOR_TRANSPARENT;
 }
 
 

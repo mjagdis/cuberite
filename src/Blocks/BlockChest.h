@@ -3,6 +3,7 @@
 
 #include "../BlockArea.h"
 #include "../Entities/Player.h"
+#include "Map.h"
 #include "Mixins.h"
 
 
@@ -22,6 +23,6 @@ public:
 	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
-		return 13;
+		return cMap::eMapColor::E_MAP_COLOR_WOOD;
 	}
 } ;

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 
 
 
@@ -57,26 +58,26 @@ private:
 	{
 		switch (a_Meta)
 		{
-			case E_META_CONCRETE_POWDER_WHITE: return 8;
-			case E_META_CONCRETE_POWDER_ORANGE: return 15;
-			case E_META_CONCRETE_POWDER_MAGENTA: return 16;
-			case E_META_CONCRETE_POWDER_LIGHTBLUE: return 17;
-			case E_META_CONCRETE_POWDER_YELLOW: return 18;
-			case E_META_CONCRETE_POWDER_LIGHTGREEN: return 19;
-			case E_META_CONCRETE_POWDER_PINK: return 20;
-			case E_META_CONCRETE_POWDER_GRAY: return 21;
-			case E_META_CONCRETE_POWDER_LIGHTGRAY: return 22;
-			case E_META_CONCRETE_POWDER_CYAN: return 23;
-			case E_META_CONCRETE_POWDER_PURPLE: return 24;
-			case E_META_CONCRETE_POWDER_BLUE: return 25;
-			case E_META_CONCRETE_POWDER_BROWN: return 26;
-			case E_META_CONCRETE_POWDER_GREEN: return 27;
-			case E_META_CONCRETE_POWDER_RED: return 28;
-			case E_META_CONCRETE_POWDER_BLACK: return 29;
+			case E_META_CONCRETE_POWDER_WHITE: return cMap::eMapColor::E_MAP_COLOR_STONE;
+			case E_META_CONCRETE_POWDER_ORANGE: return cMap::eMapColor::E_MAP_COLOR_ORANGE;
+			case E_META_CONCRETE_POWDER_MAGENTA: return cMap::eMapColor::E_MAP_COLOR_MAGENTA;
+			case E_META_CONCRETE_POWDER_LIGHTBLUE: return cMap::eMapColor::E_MAP_COLOR_LIGHTBLUE;
+			case E_META_CONCRETE_POWDER_YELLOW: return cMap::eMapColor::E_MAP_COLOR_YELLOW;
+			case E_META_CONCRETE_POWDER_LIGHTGREEN: return cMap::eMapColor::E_MAP_COLOR_LIGHTGREEN;
+			case E_META_CONCRETE_POWDER_PINK: return cMap::eMapColor::E_MAP_COLOR_PINK;
+			case E_META_CONCRETE_POWDER_GRAY: return cMap::eMapColor::E_MAP_COLOR_GRAY;
+			case E_META_CONCRETE_POWDER_LIGHTGRAY: return cMap::eMapColor::E_MAP_COLOR_LIGHTGRAY;
+			case E_META_CONCRETE_POWDER_CYAN: return cMap::eMapColor::E_MAP_COLOR_CYAN;
+			case E_META_CONCRETE_POWDER_PURPLE: return cMap::eMapColor::E_MAP_COLOR_PURPLE;
+			case E_META_CONCRETE_POWDER_BLUE: return cMap::eMapColor::E_MAP_COLOR_BLUE;
+			case E_META_CONCRETE_POWDER_BROWN: return cMap::eMapColor::E_MAP_COLOR_BROWN;
+			case E_META_CONCRETE_POWDER_GREEN: return cMap::eMapColor::E_MAP_COLOR_GREEN;
+			case E_META_CONCRETE_POWDER_RED: return cMap::eMapColor::E_MAP_COLOR_RED;
+			case E_META_CONCRETE_POWDER_BLACK: return cMap::eMapColor::E_MAP_COLOR_BLACK;
 			default:
 			{
 				ASSERT(!"Unhandled meta in concrete powder handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_STONE;
 			}
 		}
 	}

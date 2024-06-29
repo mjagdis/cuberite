@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 #include "Mixins.h"
 #include "../EffectID.h"
 
@@ -79,16 +80,16 @@ private:
 		UNUSED(a_Meta);
 		switch (m_BlockType)
 		{
-			case E_BLOCK_OAK_FENCE_GATE: return 13;
-			case E_BLOCK_SPRUCE_FENCE_GATE: return 34;
-			case E_BLOCK_BIRCH_FENCE_GATE: return 2;
-			case E_BLOCK_JUNGLE_FENCE_GATE: return 10;
-			case E_BLOCK_DARK_OAK_FENCE_GATE: return 26;
-			case E_BLOCK_ACACIA_FENCE_GATE: return 15;
+			case E_BLOCK_OAK_FENCE_GATE: return cMap::eMapColor::E_MAP_COLOR_OAK;
+			case E_BLOCK_SPRUCE_FENCE_GATE: return cMap::eMapColor::E_MAP_COLOR_SPRUCE;
+			case E_BLOCK_BIRCH_FENCE_GATE: return cMap::eMapColor::E_MAP_COLOR_BIRCH;
+			case E_BLOCK_JUNGLE_FENCE_GATE: return cMap::eMapColor::E_MAP_COLOR_JUNGLE;
+			case E_BLOCK_DARK_OAK_FENCE_GATE: return cMap::eMapColor::E_MAP_COLOR_DARK_OAK;
+			case E_BLOCK_ACACIA_FENCE_GATE: return cMap::eMapColor::E_MAP_COLOR_ACACIA;
 			default:
 			{
 				ASSERT(!"Unhandled blocktype in fence gate handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_WOOD;
 			}
 		}
 	}

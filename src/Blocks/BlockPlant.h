@@ -22,6 +22,12 @@ protected:
 
 	~cBlockPlant() = default;
 
+	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
+	{
+		UNUSED(a_Meta);
+		return cMap::eMapColor::E_MAP_COLOR_PLANT;
+	}
+
 	/** The action the plant can take on an update. */
 	enum PlantAction
 	{

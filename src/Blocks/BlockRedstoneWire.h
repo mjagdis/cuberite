@@ -59,16 +59,6 @@ private:
 	{
 		return cItem(E_ITEM_REDSTONE_DUST, 1, 0);
 	}
-
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
-	}
 } ;
 
 

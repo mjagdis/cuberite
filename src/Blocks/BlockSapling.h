@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 #include "../FastRandom.h"
 
 
@@ -217,7 +218,7 @@ private:
 	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
-		return 7;
+		return cMap::eMapColor::E_MAP_COLOR_PLANT;
 	}
 
 	static bool IsLargeTree(cChunk & a_Chunk, int a_RelX, int a_RelY, int a_RelZ, NIBBLETYPE a_Meta)

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 
 
 
@@ -38,26 +39,26 @@ private:
 	{
 		switch (a_Meta)
 		{
-			case E_META_CARPET_WHITE: return 14;
-			case E_META_CARPET_ORANGE: return 15;
-			case E_META_CARPET_MAGENTA: return 16;
-			case E_META_CARPET_LIGHTBLUE: return 17;
-			case E_META_CARPET_YELLOW: return 18;
-			case E_META_CARPET_LIGHTGREEN: return 19;
-			case E_META_CARPET_PINK: return 20;
-			case E_META_CARPET_GRAY: return 21;
-			case E_META_CARPET_LIGHTGRAY: return 22;
-			case E_META_CARPET_CYAN: return 23;
-			case E_META_CARPET_PURPLE: return 24;
-			case E_META_CARPET_BLUE: return 25;
-			case E_META_CARPET_BROWN: return 26;
-			case E_META_CARPET_GREEN: return 27;
-			case E_META_CARPET_RED: return 28;
-			case E_META_CARPET_BLACK: return 29;
+			case E_META_CARPET_WHITE: return cMap::eMapColor::E_MAP_COLOR_WHITE;
+			case E_META_CARPET_ORANGE: return cMap::eMapColor::E_MAP_COLOR_ORANGE;
+			case E_META_CARPET_MAGENTA: return cMap::eMapColor::E_MAP_COLOR_MAGENTA;
+			case E_META_CARPET_LIGHTBLUE: return cMap::eMapColor::E_MAP_COLOR_LIGHTBLUE;
+			case E_META_CARPET_YELLOW: return cMap::eMapColor::E_MAP_COLOR_YELLOW;
+			case E_META_CARPET_LIGHTGREEN: return cMap::eMapColor::E_MAP_COLOR_LIGHTGREEN;
+			case E_META_CARPET_PINK: return cMap::eMapColor::E_MAP_COLOR_PINK;
+			case E_META_CARPET_GRAY: return cMap::eMapColor::E_MAP_COLOR_GRAY;
+			case E_META_CARPET_LIGHTGRAY: return cMap::eMapColor::E_MAP_COLOR_LIGHTGRAY;
+			case E_META_CARPET_CYAN: return cMap::eMapColor::E_MAP_COLOR_CYAN;
+			case E_META_CARPET_PURPLE: return cMap::eMapColor::E_MAP_COLOR_PURPLE;
+			case E_META_CARPET_BLUE: return cMap::eMapColor::E_MAP_COLOR_BLUE;
+			case E_META_CARPET_BROWN: return cMap::eMapColor::E_MAP_COLOR_BROWN;
+			case E_META_CARPET_GREEN: return cMap::eMapColor::E_MAP_COLOR_GREEN;
+			case E_META_CARPET_RED: return cMap::eMapColor::E_MAP_COLOR_RED;
+			case E_META_CARPET_BLACK: return cMap::eMapColor::E_MAP_COLOR_BLACK;
 			default:
 			{
 				ASSERT(!"Unhandled meta in carpet handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_WOOL;
 			}
 		}
 	}

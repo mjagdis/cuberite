@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 #include "Mixins.h"
 #include "../EffectID.h"
 
@@ -96,12 +97,12 @@ private:
 		UNUSED(a_Meta);
 		switch (m_BlockType)
 		{
-			case E_BLOCK_TRAPDOOR: return 13;
-			case E_BLOCK_IRON_TRAPDOOR: return 6;
+			case E_BLOCK_TRAPDOOR: return cMap::eMapColor::E_MAP_COLOR_WOOD;
+			case E_BLOCK_IRON_TRAPDOOR: return cMap::eMapColor::E_MAP_COLOR_METAL;
 			default:
 			{
 				ASSERT(!"Unhandled blocktype in trapdoor handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_WOOD;
 			}
 		}
 	}

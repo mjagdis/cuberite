@@ -23,6 +23,8 @@ Declares the 1.8 protocol classes:
 #include "CircularBufferCompressor.h"
 #include "StringCompression.h"
 
+#include "Palettes/MapPalette_1_8.h"
+
 
 
 
@@ -172,6 +174,9 @@ protected:
 
 	/** Returns the protocol version. */
 	virtual Version GetProtocolVersion() const override;
+
+	/** Converts a map colour into something allowable by this protocol version. */
+	virtual Byte MapColour(Byte a_Colour) const { return MapPalette_1_8::MapColour(a_Colour); }
 
 	/** Reads and handles the packet. The packet length and type have already been read.
 	Returns true if the packet was understood, false if it was an unknown packet. */

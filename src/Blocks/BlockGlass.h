@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 
 
 
@@ -24,16 +25,6 @@ private:
 			return cItem(m_BlockType, 1, a_BlockMeta);
 		}
 		return {};
-	}
-
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
 	}
 } ;
 

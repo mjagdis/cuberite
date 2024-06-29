@@ -3,6 +3,7 @@
 
 // Declares the cBlockInfestedHandler class representing the handler for Silverfish blocks (Mojang calls them Monster Eggs)
 
+#include "Map.h"
 #include "../Entities/Player.h"
 
 
@@ -84,6 +85,6 @@ private:
 
 	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
-		return 11;
+		return cMap::eMapColor::E_MAP_COLOR_STONE;
 	}
 } ;

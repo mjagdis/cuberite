@@ -353,9 +353,9 @@ bool cMap::UpdatePixel(UInt8 a_X, UInt8 a_Z)
 					continue;
 				}
 			}
-			else if (ColourID == 0)
+			else if (ColourID == E_MAP_COLOR_TRANSPARENT)
 			{
-				while (((--Height) != -1) && ((ColourID = cBlockHandler::For(a_Chunk.GetBlock(RelX, Height, RelZ)).GetMapBaseColourID(a_Chunk.GetMeta(RelX, Height, RelZ))) == 0))
+				while (((--Height) != -1) && ((ColourID = cBlockHandler::For(a_Chunk.GetBlock(RelX, Height, RelZ)).GetMapBaseColourID(a_Chunk.GetMeta(RelX, Height, RelZ))) == E_MAP_COLOR_TRANSPARENT))
 				{
 					continue;
 				}

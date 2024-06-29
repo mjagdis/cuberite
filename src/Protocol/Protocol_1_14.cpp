@@ -224,7 +224,7 @@ void cProtocol_1_14::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a
 		{
 			for (UInt8 x = a_DataStartX; x <= a_DataEndX; x++)
 			{
-				Pkt.WriteBEUInt8(a_Map.GetPixel(x, y));
+				Pkt.WriteBEUInt8(MapColour(a_Map.GetPixel(x, y)));
 			}
 		}
 	}

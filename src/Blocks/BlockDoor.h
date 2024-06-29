@@ -5,6 +5,7 @@
 #include "../BlockInfo.h"
 #include "../Entities/Player.h"
 #include "../Chunk.h"
+#include "Map.h"
 #include "Mixins.h"
 #include "ChunkInterface.h"
 #include "BlockSlab.h"
@@ -256,17 +257,17 @@ private:
 		UNUSED(a_Meta);
 		switch (m_BlockType)
 		{
-			case E_BLOCK_OAK_DOOR: return 13;
-			case E_BLOCK_SPRUCE_DOOR: return 34;
-			case E_BLOCK_BIRCH_DOOR: return 2;
-			case E_BLOCK_JUNGLE_DOOR: return 10;
-			case E_BLOCK_DARK_OAK_DOOR: return 26;
-			case E_BLOCK_ACACIA_DOOR: return 15;
-			case E_BLOCK_IRON_DOOR: return 6;
+			case E_BLOCK_OAK_DOOR: return cMap::eMapColor::E_MAP_COLOR_OAK;
+			case E_BLOCK_SPRUCE_DOOR: return cMap::eMapColor::E_MAP_COLOR_SPRUCE;
+			case E_BLOCK_BIRCH_DOOR: return cMap::eMapColor::E_MAP_COLOR_BIRCH;
+			case E_BLOCK_JUNGLE_DOOR: return cMap::eMapColor::E_MAP_COLOR_JUNGLE;
+			case E_BLOCK_DARK_OAK_DOOR: return cMap::eMapColor::E_MAP_COLOR_DARK_OAK;
+			case E_BLOCK_ACACIA_DOOR: return cMap::eMapColor::E_MAP_COLOR_ACACIA;
+			case E_BLOCK_IRON_DOOR: return cMap::eMapColor::E_MAP_COLOR_METAL;
 			default:
 			{
 				ASSERT(!"Unhandled blocktype in door handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_WOOD;
 			}
 		}
 	}

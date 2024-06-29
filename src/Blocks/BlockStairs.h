@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 #include "Mixins.h"
 
 
@@ -56,24 +57,24 @@ private:
 		UNUSED(a_Meta);
 		switch (m_BlockType)
 		{
-			case E_BLOCK_SANDSTONE_STAIRS:
-			case E_BLOCK_BIRCH_WOOD_STAIRS: return 2;
-			case E_BLOCK_QUARTZ_STAIRS: return 8;
-			case E_BLOCK_JUNGLE_WOOD_STAIRS:
-			case E_BLOCK_RED_SANDSTONE_STAIRS: return 10;
+			case E_BLOCK_SANDSTONE_STAIRS: return cMap::eMapColor::E_MAP_COLOR_SAND;
+			case E_BLOCK_BIRCH_WOOD_STAIRS: return cMap::eMapColor::E_MAP_COLOR_BIRCH;
+			case E_BLOCK_QUARTZ_STAIRS: return cMap::eMapColor::E_MAP_COLOR_QUARTZ;
+			case E_BLOCK_JUNGLE_WOOD_STAIRS: return cMap::eMapColor::E_MAP_COLOR_JUNGLE;
+			case E_BLOCK_RED_SANDSTONE_STAIRS: return cMap::eMapColor::E_MAP_COLOR_ORANGE;
 			case E_BLOCK_COBBLESTONE_STAIRS:
-			case E_BLOCK_STONE_BRICK_STAIRS: return 11;
-			case E_BLOCK_OAK_WOOD_STAIRS: return 13;
-			case E_BLOCK_ACACIA_WOOD_STAIRS: return 15;
-			case E_BLOCK_PURPUR_STAIRS: return 16;
-			case E_BLOCK_DARK_OAK_WOOD_STAIRS: return 26;
-			case E_BLOCK_BRICK_STAIRS: return 28;
-			case E_BLOCK_NETHER_BRICK_STAIRS: return 35;
-			case E_BLOCK_SPRUCE_WOOD_STAIRS: return 34;
+			case E_BLOCK_STONE_BRICK_STAIRS: return cMap::eMapColor::E_MAP_COLOR_STONE;
+			case E_BLOCK_OAK_WOOD_STAIRS: return cMap::eMapColor::E_MAP_COLOR_OAK;
+			case E_BLOCK_ACACIA_WOOD_STAIRS: return cMap::eMapColor::E_MAP_COLOR_ACACIA;
+			case E_BLOCK_PURPUR_STAIRS: return cMap::eMapColor::E_MAP_COLOR_MAGENTA;
+			case E_BLOCK_DARK_OAK_WOOD_STAIRS: return cMap::eMapColor::E_MAP_COLOR_DARK_OAK;
+			case E_BLOCK_BRICK_STAIRS: return cMap::eMapColor::E_MAP_COLOR_RED;
+			case E_BLOCK_NETHER_BRICK_STAIRS: return cMap::eMapColor::E_MAP_COLOR_NETHER;
+			case E_BLOCK_SPRUCE_WOOD_STAIRS: return cMap::eMapColor::E_MAP_COLOR_SPRUCE;
 			default:
 			{
 				ASSERT(!"Unhandled blocktype in stairs handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_STONE;
 			}
 		}
 	}
