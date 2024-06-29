@@ -122,7 +122,7 @@ void cProtocol_1_13::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a
 		{
 			for (UInt8 x = a_DataStartX; x <= a_DataEndX; x++)
 			{
-				Pkt.WriteBEUInt8(a_Map.GetPixel(x, y));
+				Pkt.WriteBEUInt8(MapColour(a_Map.GetPixel(x, y)));
 			}
 		}
 	}
@@ -761,7 +761,7 @@ void cProtocol_1_13::ParseItemMetadata(cItem & a_Item, const ContiguousByteBuffe
 		{
 			case TAG_List:
 			{
-				if ((TagName == "ench") || (TagName == "StoredEnchantments"))  // Enchantments tags
+				if (TagName == "Enchantments")  // Enchantments tags
 				{
 					EnchantmentSerializer::ParseFromNBT(a_Item.m_Enchantments, NBT, tag);
 				}
@@ -1125,7 +1125,7 @@ void cProtocol_1_13::WriteItemNBT(cPacketizer & a_Pkt, const cItem & a_Item) con
 
 	if (!a_Item.m_Enchantments.IsEmpty())
 	{
-		EnchantmentSerializer::WriteToNBTCompound(a_Item.m_Enchantments, NBT, "ench");
+		EnchantmentSerializer::WriteToNBTCompound(a_Item.m_Enchantments, NBT, "Enchantments");
 	}
 
 	if ((a_Item.m_ItemType == E_ITEM_FIREWORK_ROCKET) || (a_Item.m_ItemType == E_ITEM_FIREWORK_STAR))

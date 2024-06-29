@@ -120,14 +120,4 @@ private:
 	{
 		return (a_Position.y > 0) && (a_Chunk.GetBlock(a_Position.addedY(-1)) == E_BLOCK_FARMLAND);
 	}
-
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 7;
-	}
 };

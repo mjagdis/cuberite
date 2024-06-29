@@ -180,16 +180,6 @@ private:
 			default:  return Super::MetaRotateCW(a_Meta);  // Wall Rotation
 		}
 	}
-
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
-	}
 } ;
 
 

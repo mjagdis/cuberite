@@ -21,6 +21,8 @@ Declares the 1.12 protocol classes:
 
 #include "RecipeMapper.h"
 
+#include "Palettes/MapPalette_1_12.h"
+
 
 
 class cProtocol_1_12:
@@ -38,6 +40,8 @@ protected:
 	virtual signed char GetProtocolEntityStatus(EntityAnimation a_Animation) const override;
 	virtual UInt32 GetProtocolMobType(eMonsterType a_MobType) const override;
 	virtual Version GetProtocolVersion() const override;
+
+	virtual Byte MapColour(Byte a_Colour) const override { return MapPalette_1_12::MapColour(a_Colour); }
 
 	virtual bool HandlePacket(cByteBuffer & a_ByteBuffer, UInt32 a_PacketType) override;
 	virtual void HandlePacketAdvancementTab(cByteBuffer & a_ByteBuffer);

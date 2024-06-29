@@ -132,16 +132,6 @@ private:
 
 		return CanBePlacedOn(NeighborBlockType, NeighborBlockMeta, Face);
 	}
-
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
-	}
 } ;
 
 
@@ -177,11 +167,5 @@ private:
 	{
 		// Always drop the ON torch, meta 0:
 		return { E_BLOCK_REDSTONE_TORCH_ON };
-	}
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
 	}
 };

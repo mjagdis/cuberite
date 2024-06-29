@@ -653,11 +653,4 @@ private:
 		ASSERT(!"Unknown rail meta");
 		return a_Meta;
 	}
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
-	}
 } ;

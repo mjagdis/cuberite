@@ -3,6 +3,7 @@
 
 #include "BlockHandler.h"
 #include "BlockType.h"
+#include "Map.h"
 #include "Mixins.h"
 #include "ChunkInterface.h"
 #include "BlockSlab.h"
@@ -154,7 +155,7 @@ private:
 	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
-		return 11;
+		return cMap::eMapColor::E_MAP_COLOR_STONE;
 	}
 } ;
 

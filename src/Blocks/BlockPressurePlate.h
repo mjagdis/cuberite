@@ -5,6 +5,7 @@
 #include "BlockSlab.h"
 #include "../Chunk.h"
 #include "BlockStairs.h"
+#include "Map.h"
 
 
 
@@ -72,14 +73,14 @@ private:
 		UNUSED(a_Meta);
 		switch (m_BlockType)
 		{
-			case E_BLOCK_STONE_PRESSURE_PLATE: return 11;
-			case E_BLOCK_WOODEN_PRESSURE_PLATE: return 13;
-			case E_BLOCK_HEAVY_WEIGHTED_PRESSURE_PLATE: return 6;
-			case E_BLOCK_LIGHT_WEIGHTED_PRESSURE_PLATE: return 30;
+			case E_BLOCK_STONE_PRESSURE_PLATE: return cMap::eMapColor::E_MAP_COLOR_STONE;
+			case E_BLOCK_WOODEN_PRESSURE_PLATE: return cMap::eMapColor::E_MAP_COLOR_WOOD;
+			case E_BLOCK_HEAVY_WEIGHTED_PRESSURE_PLATE: return cMap::eMapColor::E_MAP_COLOR_METAL;
+			case E_BLOCK_LIGHT_WEIGHTED_PRESSURE_PLATE: return cMap::eMapColor::E_MAP_COLOR_GOLD;
 			default:
 			{
 				ASSERT(!"Unhandled blocktype in pressure plate handler!");
-				return 0;
+				return cMap::eMapColor::E_MAP_COLOR_STONE;
 			}
 		}
 	}

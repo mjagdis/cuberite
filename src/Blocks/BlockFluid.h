@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 
 
 
@@ -130,7 +131,7 @@ private:
 	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
-		return 4;
+		return cMap::eMapColor::E_MAP_COLOR_FIRE;
 	}
 
 
@@ -161,10 +162,10 @@ private:
 		UNUSED(a_Meta);
 		if (IsBlockWater(m_BlockType))
 		{
-			return 12;
+			return cMap::eMapColor::E_MAP_COLOR_WATER;
 		}
 		ASSERT(!"Unhandled blocktype in fluid/water handler!");
-		return 0;
+		return cMap::eMapColor::E_MAP_COLOR_WATER;
 	}
 
 	virtual bool CanSustainPlant(BLOCKTYPE a_Plant) const override

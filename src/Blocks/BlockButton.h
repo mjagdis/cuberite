@@ -172,16 +172,6 @@ private:
 		return cBlockInfo::FullyOccupiesVoxel(SupportBlockType);
 	}
 
-
-
-
-
-	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
-	{
-		UNUSED(a_Meta);
-		return 0;
-	}
-
 	/** Schedules a recurring event at appropriate intervals to release a button at a given position.
 	The given block type is checked when the task is executed to ensure the position still contains a button. */
 	static void QueueButtonRelease(cWorld & a_ButtonWorld, const Vector3i a_Position, const BLOCKTYPE a_BlockType)

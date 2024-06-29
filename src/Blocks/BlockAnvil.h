@@ -2,6 +2,7 @@
 #pragma once
 
 #include "BlockHandler.h"
+#include "Map.h"
 #include "Mixins.h"
 #include "../Entities/Player.h"
 #include "../UI/AnvilWindow.h"
@@ -60,7 +61,7 @@ private:
 	virtual ColourID GetMapBaseColourID(NIBBLETYPE a_Meta) const override
 	{
 		UNUSED(a_Meta);
-		return 6;
+		return cMap::eMapColor::E_MAP_COLOR_METAL;
 	}
 } ;
 

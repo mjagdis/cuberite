@@ -488,6 +488,9 @@ protected:
 	/** Returns the current protocol's version, for handling status requests. */
 	virtual Version GetProtocolVersion() const = 0;
 
+	/** Converts a map colour into something allowable by this protocol version. */
+	virtual Byte MapColour(Byte a_Colour) const = 0;
+
 	/** Sends a single packet contained within the cPacketizer class.
 	The cPacketizer's destructor calls this to send the contained packet; protocol may transform the data (compression in 1.8 etc). */
 	virtual void SendPacket(cPacketizer & a_Packet) = 0;
