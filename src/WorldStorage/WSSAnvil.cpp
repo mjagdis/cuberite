@@ -82,7 +82,8 @@ Since only the header is actually in the memory, this number can be high, but st
 
 cWSSAnvil::cWSSAnvil(cWorld * a_World, int a_CompressionFactor):
 	Super(a_World),
-	m_Compressor(a_CompressionFactor)
+	m_Compressor(a_CompressionFactor),
+	m_DataVersion(0)
 {
 	// Create a level.dat file for mapping tools, if it doesn't already exist:
 	auto fnam = fmt::format(FMT_STRING("{}{}level.dat"), a_World->GetDataPath(), cFile::PathSeparator());
@@ -347,6 +348,12 @@ bool cWSSAnvil::LoadChunkFromNBT(const cChunkCoords & a_Chunk, const cParsedNBT 
 	struct SetChunkData Data(a_Chunk);
 
 	// Load the blockdata, blocklight and skylight:
+	int DataVersion = a_NBT.FindChildByName(0, "DataVersion");
+	if ((DataVersion >= 0) && (a_NBT.GetType(DataVersion) == TAG_Int))
+	{
+		m_DataVersion = a_NBT.GetInt(DataVersion);
+	}
+
 	int Level = a_NBT.FindChildByName(0, "Level");
 	if (Level < 0)
 	{
@@ -2014,13 +2021,24 @@ void cWSSAnvil::LoadHangingFromNBT(cHangingEntity & a_Hanging, const cParsedNBT 
 {
 	// "Facing" tag is the prime source of the Facing; if not available, translate from older "Direction" or "Dir"
 	int Facing = a_NBT.FindChildByName(a_TagIdx, "Facing");
-	if (Facing < 0)
+	if (Facing >= 0)
 	{
-		return;
+		if (a_Hanging.IsItemFrame() && (m_DataVersion >= 1457))
+		{
+			// Newer item frames can face in all six directions.
+			a_Hanging.SetFacing(static_cast<eBlockFace>(a_NBT.GetByte(Facing)));
+		}
+		else
+		{
+			// Older item frames and other hanging entities can only face horizontally.
+			a_Hanging.SetFacing(cHangingEntity::ProtocolFaceToBlockFace(a_NBT.GetByte(Facing)));
+		}
 	}
 
-	a_Hanging.SetProtocolFacing(a_NBT.GetByte(Facing));
-
+#if 0
+	// What are these? They aren't position (that's the "Pos" compound. Save writes them
+	// using floor on the position but we certainly shouldn't be using them to move the
+	// entity to a floored version of its actual position. They seem redundant?
 	int TileX = a_NBT.FindChildByName(a_TagIdx, "TileX");
 	int TileY = a_NBT.FindChildByName(a_TagIdx, "TileY");
 	int TileZ = a_NBT.FindChildByName(a_TagIdx, "TileZ");
@@ -2032,6 +2050,7 @@ void cWSSAnvil::LoadHangingFromNBT(cHangingEntity & a_Hanging, const cParsedNBT 
 			static_cast<double>(a_NBT.GetInt(TileZ))
 		);
 	}
+#endif
 }
 
 

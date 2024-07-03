@@ -524,6 +524,15 @@ signed char cProtocol_1_13::GetProtocolEntityStatus(const EntityAnimation a_Anim
 
 
 
+UInt8 cProtocol_1_13::GetProtocolEntityData(const cEntity & a_Entity) const
+{
+	return a_Entity.GetEntityData();
+}
+
+
+
+
+
 UInt32 cProtocol_1_13::GetProtocolItemType(short a_ItemID, short a_ItemDamage) const
 {
 	return Palette_1_13::From(PaletteUpgrade::FromItem(a_ItemID, a_ItemDamage));

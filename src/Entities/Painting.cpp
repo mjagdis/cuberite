@@ -22,7 +22,6 @@ cPainting::cPainting(const AString & a_Name, eBlockFace a_Direction, Vector3d a_
 
 void cPainting::SpawnOn(cClientHandle & a_Client)
 {
-	Super::SpawnOn(a_Client);
 	a_Client.SendPaintingSpawn(*this);
 
 	m_World->BroadcastSoundEffect("entity.painting.place", GetPosition(), 1, 1);

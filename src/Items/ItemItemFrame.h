@@ -4,6 +4,8 @@
 #include "ItemHandler.h"
 #include "../Entities/ItemFrame.h"
 #include "../Entities/Player.h"
+#include "../ClientHandle.h"
+#include "../Protocol/Protocol.h"
 
 
 
@@ -31,10 +33,14 @@ public:
 		eBlockFace a_ClickedBlockFace
 	) const override
 	{
-		// Can only place on a side face:
-		if ((a_ClickedBlockFace == BLOCK_FACE_NONE) || (a_ClickedBlockFace == BLOCK_FACE_YP) || (a_ClickedBlockFace == BLOCK_FACE_YM))
+		auto * ClientHandle = a_Player->GetClientHandle();
+		if (ClientHandle && (ClientHandle->GetProtocolVersion() < static_cast<UInt32>(cProtocol::Version::v1_13)))
 		{
-			return false;
+			// Can only place on a side face with clients <= 1.12.2
+			if ((a_ClickedBlockFace == BLOCK_FACE_YP) || (a_ClickedBlockFace == BLOCK_FACE_YM))
+			{
+				return false;
+			}
 		}
 
 		// Make sure the support block is a valid block to place an item frame on:

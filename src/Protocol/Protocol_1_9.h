@@ -56,6 +56,7 @@ public:
 	virtual void SendPlayerPermissionLevel() override;
 	virtual void SendPlayerSpawn          (const cPlayer & a_Player) override;
 	virtual void SendSoundEffect          (const AString & a_SoundName, Vector3d a_Origin, float a_Volume, float a_Pitch) override;
+	virtual void SendSpawnEntity          (const cEntity & a_Entity) override;
 	virtual void SendSpawnMob             (const cMonster & a_Mob) override;
 	virtual void SendThunderbolt          (Vector3i a_Origin) override;
 	virtual void SendUnleashEntity        (const cEntity & a_Entity) override;
@@ -95,7 +96,6 @@ protected:
 	virtual void HandleVanillaPluginMessage         (cByteBuffer & a_ByteBuffer, std::string_view a_Channel) override;
 
 	virtual void ParseItemMetadata(cItem & a_Item, ContiguousByteBufferView a_Metadata) const override;
-	virtual void SendEntitySpawn(const cEntity & a_Entity, const UInt8 a_ObjectType, const Int32 a_ObjectData) override;
 	virtual void WriteBlockEntity(cFastNBTWriter & a_Writer, const cBlockEntity & a_BlockEntity) const override;
 	virtual void WriteEntityMetadata(cPacketizer & a_Pkt, const cEntity & a_Entity) const override;
 	virtual void WriteItem(cPacketizer & a_Pkt, const cItem & a_Item) const override;

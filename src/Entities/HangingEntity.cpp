@@ -12,11 +12,37 @@
 
 
 cHangingEntity::cHangingEntity(eEntityType a_EntityType, eBlockFace a_Facing, Vector3d a_Pos) :
-	Super(a_EntityType, a_Pos, 0.5f, 0.5f),
-	m_Facing(cHangingEntity::BlockFaceToProtocolFace(a_Facing))
+	Super(a_EntityType, a_Pos, 0.5f, 0.5f)
 {
+	SetFacing(a_Facing);
 	SetMaxHealth(1);
 	SetHealth(1);
+}
+
+
+
+
+
+void cHangingEntity::SetFacing(eBlockFace a_Facing)
+{
+	m_Facing = a_Facing;
+
+	double Yaw = 0;
+	double Pitch = 0;
+
+	switch (a_Facing)
+	{
+		default:
+		case BLOCK_FACE_ZM: Yaw = 180.0; break;
+		case BLOCK_FACE_ZP: Yaw = 0.0; break;
+		case BLOCK_FACE_XP: Yaw = 270.0; break;
+		case BLOCK_FACE_XM: Yaw = 90.0; break;
+		case BLOCK_FACE_YP: Pitch = -90.0; break;
+		case BLOCK_FACE_YM: Pitch = 90.0; break;
+	}
+
+	SetYaw(Yaw);
+	SetPitch(Pitch);
 }
 
 
@@ -43,15 +69,6 @@ void cHangingEntity::KilledBy(TakeDamageInfo & a_TDI)
 
 
 
-void cHangingEntity::SpawnOn(cClientHandle & a_ClientHandle)
-{
-	SetYaw(GetProtocolFacing() * 90);
-}
-
-
-
-
-
 void cHangingEntity::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 {
 	UNUSED(a_Dt);
@@ -63,7 +80,7 @@ void cHangingEntity::Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 	}
 
 	BLOCKTYPE Block;
-	const auto SupportPosition = AddFaceDirection(cChunkDef::AbsoluteToRelative(GetPosition()), ProtocolFaceToBlockFace(m_Facing), true);
+	const auto SupportPosition = AddFaceDirection(cChunkDef::AbsoluteToRelative(GetPosition()), m_Facing, true);
 	if (!a_Chunk.UnboundedRelGetBlockType(SupportPosition, Block) || IsValidSupportBlock(Block))
 	{
 		return;

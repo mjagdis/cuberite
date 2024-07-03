@@ -31,6 +31,7 @@ public:  // tolua_export
 	// tolua_end
 
 	// cEntity overrides:
+	virtual Int32 GetEntityData(void) const override { return  m_BlockType | (static_cast<Int32>(m_BlockMeta) << 12); }
 	virtual void SpawnOn(cClientHandle & a_ClientHandle) override;
 	virtual void Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk) override;
 

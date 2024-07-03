@@ -1518,7 +1518,7 @@ void cProtocol_1_9_0::ParseItemMetadata(cItem & a_Item, const ContiguousByteBuff
 
 
 
-void cProtocol_1_9_0::SendEntitySpawn(const cEntity & a_Entity, const UInt8 a_ObjectType, const Int32 a_ObjectData)
+void cProtocol_1_9_0::SendSpawnEntity(const cEntity & a_Entity)
 {
 	ASSERT(m_State == 3);  // In game mode?
 
@@ -1529,13 +1529,16 @@ void cProtocol_1_9_0::SendEntitySpawn(const cEntity & a_Entity, const UInt8 a_Ob
 	Pkt.WriteBEUInt64(0);
 	Pkt.WriteBEUInt64(a_Entity.GetUniqueID());
 
-	Pkt.WriteBEUInt8(a_ObjectType);
+	Pkt.WriteBEUInt8(GetProtocolEntityType(a_Entity));
 	Pkt.WriteBEDouble(a_Entity.GetPosX());
 	Pkt.WriteBEDouble(a_Entity.GetPosY());
 	Pkt.WriteBEDouble(a_Entity.GetPosZ());
 	Pkt.WriteByteAngle(a_Entity.GetPitch());
 	Pkt.WriteByteAngle(a_Entity.GetYaw());
-	Pkt.WriteBEInt32(a_ObjectData);
+
+	Int32 EntityData = GetProtocolEntityData(a_Entity);
+	Pkt.WriteBEInt32(EntityData);
+
 	Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedX() * 400));
 	Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedY() * 400));
 	Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedZ() * 400));

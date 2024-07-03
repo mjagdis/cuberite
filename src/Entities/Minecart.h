@@ -37,6 +37,7 @@ public:
 	} ;
 
 	// cEntity overrides:
+	virtual Int32 GetEntityData(void) const override { return static_cast<Int32>(m_Payload); }
 	virtual void SpawnOn(cClientHandle & a_ClientHandle) override;
 	virtual void HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a_Chunk) override;
 	virtual bool DoTakeDamage(TakeDamageInfo & TDI) override;
