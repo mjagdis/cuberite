@@ -151,6 +151,10 @@ public:
 	\param a_World The world being removed from. */
 	virtual void OnRemoveFromWorld(cWorld & a_World);
 
+	/** Returns the entity data needed by protocol handling.
+	The default entity data indicates velocity is present. */
+	virtual Int32 GetEntityData(void) const { return 1; }
+
 	// tolua_begin
 
 	eEntityType GetEntityType(void) const { return m_EntityType; }

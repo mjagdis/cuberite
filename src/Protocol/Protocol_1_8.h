@@ -163,6 +163,10 @@ protected:
 	Only entities that the Send Spawn Entity packet supports are valid inputs to this method */
 	virtual UInt8 GetProtocolEntityType(const cEntity & a_Entity) const;
 
+	/** Converts entity data to protocol-specific entity data.
+	Only entities that the Send Spawn Entity packet supports are valid inputs to this method */
+	virtual UInt8 GetProtocolEntityData(const cEntity & a_Entity) const;
+
 	/** Converts a map icon to a protocol-specific icon. */
 	virtual std::pair<cMap::eMapIcon, UInt8> GetProtocolMapIcon(cMap::eMapIcon a_Icon, UInt8 a_Rot) const;
 
@@ -228,9 +232,6 @@ protected:
 	Returns false if not enough received data.
 	a_KeepRemainingBytes tells the function to keep that many bytes at the end of the buffer. */
 	virtual bool ReadItem(cByteBuffer & a_ByteBuffer, cItem & a_Item, size_t a_KeepRemainingBytes = 0) const;
-
-	/** Sends the entity type and entity-dependent data required for the entity to initially spawn. */
-	virtual void SendEntitySpawn(const cEntity & a_Entity, const UInt8 a_ObjectType, const Int32 a_ObjectData);
 
 	/** Sends the packet to the client. Called by the cPacketizer's destructor. */
 	virtual void SendPacket(cPacketizer & a_Packet) override;

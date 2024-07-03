@@ -300,4 +300,8 @@ protected:
 	virtual bool LoadChunk(const cChunkCoords & a_Chunk) override;
 	virtual bool SaveChunk(const cChunkCoords & a_Chunk) override;
 	virtual const AString GetName() const override {return "anvil"; }
+
+private:
+
+	int m_DataVersion;
 } ;

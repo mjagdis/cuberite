@@ -1439,42 +1439,26 @@ void cProtocol_1_8_0::SendSoundParticleEffect(const EffectID a_EffectID, Vector3
 
 void cProtocol_1_8_0::SendSpawnEntity(const cEntity & a_Entity)
 {
-	Int32 EntityData = /* Default: velocity present flag */ 1;
-	const auto EntityType = GetProtocolEntityType(a_Entity);
+	ASSERT(m_State == 3);  // In game mode?
 
-	if (a_Entity.IsMinecart())
-	{
-		const auto & Cart = static_cast<const cMinecart &>(a_Entity);
-		EntityData = static_cast<Int32>(Cart.GetPayload());
-	}
-	else if (a_Entity.IsItemFrame())
-	{
-		const auto & Frame = static_cast<const cItemFrame &>(a_Entity);
-		EntityData = static_cast<Int32>(Frame.GetProtocolFacing());
-	}
-	else if (a_Entity.IsFallingBlock())
-	{
-		const auto & Block = static_cast<const cFallingBlock &>(a_Entity);
-		EntityData = Block.GetBlockType() | (static_cast<Int32>(Block.GetBlockMeta()) << 12);
-	}
-	else if (a_Entity.IsFloater())
-	{
-		const auto & Floater = static_cast<const cFloater &>(a_Entity);
-		EntityData = static_cast<Int32>(Floater.GetOwnerID());
-	}
-	else if (a_Entity.IsProjectile())
-	{
-		using PType = cProjectileEntity::eKind;
-		const auto & Projectile = static_cast<const cProjectileEntity &>(a_Entity);
+	cPacketizer Pkt(*this, pktSpawnObject);
+	Pkt.WriteVarInt32(a_Entity.GetUniqueID());
+	Pkt.WriteBEUInt8(GetProtocolEntityType(a_Entity));
+	Pkt.WriteFPInt(a_Entity.GetPosX());
+	Pkt.WriteFPInt(a_Entity.GetPosY());
+	Pkt.WriteFPInt(a_Entity.GetPosZ());
+	Pkt.WriteByteAngle(a_Entity.GetPitch());
+	Pkt.WriteByteAngle(a_Entity.GetYaw());
 
-		if (Projectile.GetProjectileKind() == PType::pkArrow)
-		{
-			const auto & Arrow = static_cast<const cArrowEntity &>(Projectile);
-			EntityData = static_cast<Int32>(Arrow.GetCreatorUniqueID() + 1);
-		}
-	}
+	Int32 EntityData = GetProtocolEntityData(a_Entity);
+	Pkt.WriteBEInt32(EntityData);
 
-	SendEntitySpawn(a_Entity, EntityType, EntityData);
+	if (EntityData != 0)
+	{
+		Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedX() * 400));
+		Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedY() * 400));
+		Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedZ() * 400));
+	}
 }
 
 
@@ -3099,32 +3083,6 @@ bool cProtocol_1_8_0::ReadItem(cByteBuffer & a_ByteBuffer, cItem & a_Item, size_
 
 
 
-void cProtocol_1_8_0::SendEntitySpawn(const cEntity & a_Entity, const UInt8 a_ObjectType, const Int32 a_ObjectData)
-{
-	ASSERT(m_State == 3);  // In game mode?
-
-	cPacketizer Pkt(*this, pktSpawnObject);
-	Pkt.WriteVarInt32(a_Entity.GetUniqueID());
-	Pkt.WriteBEUInt8(a_ObjectType);
-	Pkt.WriteFPInt(a_Entity.GetPosX());
-	Pkt.WriteFPInt(a_Entity.GetPosY());
-	Pkt.WriteFPInt(a_Entity.GetPosZ());
-	Pkt.WriteByteAngle(a_Entity.GetPitch());
-	Pkt.WriteByteAngle(a_Entity.GetYaw());
-	Pkt.WriteBEInt32(a_ObjectData);
-
-	if (a_ObjectData != 0)
-	{
-		Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedX() * 400));
-		Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedY() * 400));
-		Pkt.WriteBEInt16(static_cast<Int16>(a_Entity.GetSpeedZ() * 400));
-	}
-}
-
-
-
-
-
 void cProtocol_1_8_0::SendPacket(cPacketizer & a_Pkt)
 {
 	ASSERT(m_OutPacketBuffer.GetReadableSpace() == m_OutPacketBuffer.GetUsedSpace());
@@ -4039,6 +3997,41 @@ UInt8 cProtocol_1_8_0::GetProtocolEntityType(const cEntity & a_Entity) const
 		case Type::etPainting: break;
 	}
 	UNREACHABLE("Unhandled entity kind");
+}
+
+
+
+
+
+UInt8 cProtocol_1_8_0::GetProtocolEntityData(const cEntity & a_Entity) const
+{
+	Int32 EntityData = a_Entity.GetEntityData();
+
+	if (a_Entity.IsItemFrame())
+	{
+		switch (EntityData)
+		{
+			case BLOCK_FACE_ZP: return 0;
+			case BLOCK_FACE_ZM: return 2;
+			case BLOCK_FACE_XM: return 1;
+			case BLOCK_FACE_XP: return 3;
+
+			// Item frames could have been placed on the top or bottom
+			// of blocks by a 1.13+ client. We can't handle that here
+			// so we just show it in the "wrong" orientation :-(.
+			case BLOCK_FACE_YP:
+			case BLOCK_FACE_YM:
+			case BLOCK_FACE_NONE:
+			default:
+			{
+				// N.B. The value here is not arbitrary. It is the face value
+				// that matches the default yaw set in cHangingEntity::SetFacing
+				return 0;
+			}
+		}
+	}
+
+	return EntityData;
 }
 
 

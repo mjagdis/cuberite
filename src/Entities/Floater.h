@@ -21,6 +21,7 @@ public:  // tolua_export
 
 	cFloater(Vector3d a_Pos, Vector3d a_Speed, UInt32 a_PlayerID, int a_CountDownTime);
 
+	virtual Int32 GetEntityData(void) const override { return static_cast<Int32>(m_PlayerID); }
 	virtual void SpawnOn(cClientHandle & a_Client) override;
 	virtual void Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk) override;
 

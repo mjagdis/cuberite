@@ -36,7 +36,7 @@ bool cItemFrame::DoTakeDamage(TakeDamageInfo & a_TDI)
 		const auto SpawnPosition = GetPosition().addedY(-0.125);
 
 		// The direction the pickup travels to simulate a pop-out effect.
-		const auto FlyOutSpeed = AddFaceDirection(Vector3i(), ProtocolFaceToBlockFace(m_Facing)) * 2;
+		const auto FlyOutSpeed = AddFaceDirection(Vector3i(), m_Facing) * 2;
 
 		// Spawn the frame's held item:
 		GetWorld()->SpawnItemPickup(SpawnPosition, m_Item, FlyOutSpeed);
@@ -128,7 +128,6 @@ void cItemFrame::OnRightClicked(cPlayer & a_Player)
 
 void cItemFrame::SpawnOn(cClientHandle & a_ClientHandle)
 {
-	Super::SpawnOn(a_ClientHandle);
 	a_ClientHandle.SendSpawnEntity(*this);
 	a_ClientHandle.SendEntityMetadata(*this);
 

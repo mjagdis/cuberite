@@ -139,6 +139,14 @@ protected:
 	bool m_IsInGround;
 
 	// cEntity overrides:
+	virtual Int32 GetEntityData(void) const override
+	{
+		if (m_ProjectileKind == eKind::pkArrow)
+		{
+			return static_cast<Int32>(m_CreatorData.m_UniqueID + 1);
+		}
+		return 1;
+	}
 	virtual void Tick(std::chrono::milliseconds a_Dt, cChunk & a_Chunk) override;
 	virtual void HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a_Chunk) override;
 	virtual void SpawnOn(cClientHandle & a_Client) final override;
