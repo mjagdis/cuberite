@@ -221,6 +221,8 @@ bool cMap::SetPixel(UInt8 a_X, UInt8 a_Z, ColorID a_Data)
 
 void cMap::UpdateRadius(const cPlayer * a_Player)
 {
+	int Radius = ((m_World->GetDimension() != dimNether) ? DEFAULT_RADIUS : DEFAULT_RADIUS / 2);
+
 	// Scan decorators in this region and remove any non-player, non-manual types that
 	// don't exist, are no longer ticking or have moved.
 	for (auto itr = m_Decorators.begin(); itr != m_Decorators.end();)
@@ -234,7 +236,7 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 			int dZ = FloorC(itr->second.m_Position.z - a_Player->GetPosZ());
 
 			// If it's inside our circle of awareness we'll check it.
-			if ((dX * dX) + (dZ * dZ) < DEFAULT_RADIUS * DEFAULT_RADIUS)
+			if ((dX * dX) + (dZ * dZ) < Radius * Radius)
 			{
 				int BlockX = FloorC(itr->second.m_Position.x);
 				int BlockZ = FloorC(itr->second.m_Position.z);
@@ -293,7 +295,7 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 
 	int PlayerPixelX = static_cast<int>(a_Player->GetPosX() - m_CenterX) / GetPixelWidth() + MAP_WIDTH  / 2;
 	int PlayerPixelZ = static_cast<int>(a_Player->GetPosZ() - m_CenterZ) / GetPixelWidth() + MAP_HEIGHT / 2;
-	int PixelRadius = DEFAULT_RADIUS / GetPixelWidth();
+	int PixelRadius = Radius / GetPixelWidth();
 
 	UInt8 StartX = static_cast<UInt8>(Clamp(PlayerPixelX - PixelRadius, 0, MAP_WIDTH));
 	UInt8 StartZ = static_cast<UInt8>(Clamp(PlayerPixelZ - PixelRadius, 0, MAP_HEIGHT));
