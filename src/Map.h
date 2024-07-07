@@ -13,6 +13,7 @@
 
 #include "Defines.h"
 #include "ChunkDef.h"
+#include "Chunk.h"
 #include "FastRandom.h"
 
 
@@ -390,11 +391,11 @@ public:
 
 	void SetFarTrackingThreshold(unsigned int a_Threshold);
 
-	bool SetPixel(UInt8 a_X, UInt8 a_Z, ColorID a_Data);
+	bool SetPixel(int a_X, int a_Z, ColorID a_Data);
 
-	ColorID GetPixel(UInt8 a_X, UInt8 a_Z) const
+	ColorID GetPixel(int a_X, int a_Z) const
 	{
-		return ((a_X < MAP_WIDTH) && (a_Z < MAP_HEIGHT)) ? m_Data[a_Z * MAP_WIDTH + a_X] : 0;
+		return ((a_X >= 0) && (a_X < MAP_WIDTH) && (a_Z >= 0) && (a_Z < MAP_HEIGHT)) ? m_Data[a_Z * MAP_WIDTH + a_X] : 0;
 	}
 
 	int GetWidth (void) const { return MAP_WIDTH;  }
@@ -483,11 +484,13 @@ private:
 
 	mutable cCriticalSection m_CS;
 
+	bool InRange(int a_CenterX, int a_CenterZ, int a_TargetX, int a_TargetZ) const;
+
 	/** Update a circular region around the specified player. */
 	void UpdateRadius(const cPlayer * a_Player);
 
 	/** Update the specified pixel. */
-	bool UpdatePixel(UInt8 a_X, UInt8 a_Z);
+	ColourID PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const;
 
 	void AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, const AString a_Name);
 
@@ -500,6 +503,9 @@ private:
 
 	int m_CenterX;
 	int m_CenterZ;
+
+	/** The radius of the area around players that is updated when the map is held. */
+	const int m_Radius;
 
 	/** Indicates that the map has changes that need to be saved. */
 	bool m_Dirty;
