@@ -233,6 +233,7 @@ public:
 	static const int MAP_WIDTH = 128;
 	static const int MAP_HEIGHT = 128;
 	static const int DEFAULT_RADIUS = 128;
+	static const int DEFAULT_WATER_DEPTH = 16;
 	static const int DEFAULT_TRACKING_DISTANCE = 320;
 	static const int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
 

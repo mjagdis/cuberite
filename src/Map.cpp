@@ -371,7 +371,7 @@ ColourID cMap::PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const
 	static const std::array<unsigned char, 4> BrightnessID = { { 3, 0, 1, 2 } };  // Darkest to lightest
 
 	auto Height = a_Chunk.GetHeight(a_RelX, a_RelZ);
-	auto ChunkHeight = cChunkDef::Height;
+	auto HeightRange = cChunkDef::Height;
 
 	BLOCKTYPE TargetBlock;
 	BLOCKMETATYPE TargetMeta;
@@ -390,16 +390,24 @@ ColourID cMap::PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const
 	// the further we descend.
 	if (IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock))
 	{
-		ChunkHeight /= 4;
-		while ((IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock)) && (--Height != -1))
+		// We can see a maximum of number of blocks down when mapping. Beyond that it's just
+		// uniformly dark.
+		HeightRange = DEFAULT_WATER_DEPTH;
+
+		auto Surface = Height;
+		while ((IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock)) && (--Height != -1) && (Surface - Height < HeightRange - 1))
 		{
 			TargetBlock = a_Chunk.GetBlock(a_RelX, Height, a_RelZ);
 		}
+
+		// The brightness of the water is based on the depth of water rather than the absolute
+		// height of the sea floor (which we may not even have reached).
+		Height = HeightRange - 1 - (Surface - Height);
 	}
 
 	// Multiply base color ID by 4 and add brightness ID
 	const int BrightnessIDSize = static_cast<int>(BrightnessID.size());
-	return ColourID * 4 + BrightnessID[static_cast<size_t>(Clamp<int>((BrightnessIDSize * Height) / ChunkHeight, 0, BrightnessIDSize - 1))];
+	return ColourID * 4 + BrightnessID[static_cast<size_t>(Clamp<int>((BrightnessIDSize * Height) / HeightRange, 0, BrightnessIDSize - 1))];
 }
 
 
