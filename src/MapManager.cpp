@@ -110,7 +110,13 @@ std::shared_ptr<cMap> cMapManager::CopyMap(cMap & a_OldMap)
 	cCSLock Lock(m_CS);
 
 	unsigned int ID = NextID();
-	auto Map = std::make_shared<cMap>(ID, a_OldMap);
+
+	std::shared_ptr<cMap> Map;
+	{
+		cCSLock Lock(a_OldMap.m_CS);
+		Map = std::make_shared<cMap>(ID, a_OldMap);
+	}
+
 	auto [it, inserted] = m_MapData.try_emplace(ID, Map);
 	UNUSED(it);
 
