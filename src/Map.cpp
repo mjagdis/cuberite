@@ -369,27 +369,31 @@ void cMap::UpdateRadius(const cPlayer * a_Player)
 ColourID cMap::PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const
 {
 	static const std::array<unsigned char, 4> BrightnessID = { { 3, 0, 1, 2 } };  // Darkest to lightest
-	BLOCKTYPE TargetBlock;
-	NIBBLETYPE TargetMeta;
 
-	auto Height = a_Chunk.GetHeight(RelX, RelZ);
+	auto Height = a_Chunk.GetHeight(a_RelX, a_RelZ);
 	auto ChunkHeight = cChunkDef::Height;
-	a_Chunk.GetBlockTypeMeta(RelX, Height, RelZ, TargetBlock, TargetMeta);
+
+	BLOCKTYPE TargetBlock;
+	BLOCKMETATYPE TargetMeta;
+	a_Chunk.GetBlockTypeMeta(a_RelX, Height, a_RelZ, TargetBlock, TargetMeta);
 	auto ColourID = cBlockHandler::For(TargetBlock).GetMapBaseColourID(TargetMeta);
 
-	if (IsBlockWater(TargetBlock))
+	// Descend through the blocks looking for the first block that has a non-transparent colour.
+	while ((ColourID == E_MAP_COLOR_TRANSPARENT) && (--Height != -1))
+	{
+		a_Chunk.GetBlockTypeMeta(a_RelX, Height, a_RelZ, TargetBlock, TargetMeta);
+		ColourID = cBlockHandler::For(TargetBlock).GetMapBaseColourID(TargetMeta);
+	}
+
+	// Descend through water blocks ignoring transparent blocks and adjusting the brightness
+	// scaling as we go. The colour remains the colour of the top water block but gets darker
+	// the further we descend.
+	if (IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock))
 	{
 		ChunkHeight /= 4;
-		while (((--Height) != -1) && IsBlockWater(a_Chunk.GetBlock(RelX, Height, RelZ)))
+		while ((IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock)) && (--Height != -1))
 		{
-			continue;
-		}
-	}
-	else if (ColourID == E_MAP_COLOR_TRANSPARENT)
-	{
-		while (((--Height) != -1) && ((ColourID = cBlockHandler::For(a_Chunk.GetBlock(RelX, Height, RelZ)).GetMapBaseColourID(a_Chunk.GetMeta(RelX, Height, RelZ))) == E_MAP_COLOR_TRANSPARENT))
-		{
-			continue;
+			TargetBlock = a_Chunk.GetBlock(a_RelX, Height, a_RelZ);
 		}
 	}
 
