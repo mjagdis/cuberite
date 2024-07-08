@@ -48,8 +48,8 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale):
 	m_ID(a_ID),
 	m_Scale(a_Scale),
-	m_CenterX(a_CenterX),
-	m_CenterZ(a_CenterZ),
+	m_CenterX(FAST_FLOOR_DIV(a_CenterX, cChunkDef::Width * 8) * cChunkDef::Width * 8 + cChunkDef::Width * 4),
+	m_CenterZ(FAST_FLOOR_DIV(a_CenterZ, cChunkDef::Width * 8) * cChunkDef::Width * 8 + cChunkDef::Width * 4),
 	m_Radius((a_World->GetDimension() != dimNether) ? DEFAULT_RADIUS : DEFAULT_RADIUS / 2),
 	m_Dirty(true),  // This constructor is for creating a brand new map in game, it will always need saving.
 	m_Send(true),

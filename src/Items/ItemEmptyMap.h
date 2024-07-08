@@ -45,15 +45,8 @@ public:
 			}
 		}
 
-		// The map center is fixed at the central point of the 8x8 block of chunks you are standing in when you right-click it.
-
-		const int RegionWidth = cChunkDef::Width * 8;
-
-		int CenterX = FloorC(a_Player->GetPosX() / RegionWidth) * RegionWidth + (RegionWidth / 2);
-		int CenterZ = FloorC(a_Player->GetPosZ() / RegionWidth) * RegionWidth + (RegionWidth / 2);
-
 		unsigned int MapID;
-		if (a_World->GetMapManager().CreateMap(MapID, a_HeldItem.m_ItemDamage, CenterX, CenterZ))
+		if (a_World->GetMapManager().CreateMap(MapID, a_HeldItem.m_ItemDamage, FloorC(a_Player->GetPosX()), FloorC(a_Player->GetPosZ())))
 		{
 			// At the moment we are restricted to 16 bit map IDs because it is stored as damage on the item.
 			if (MapID <= 65535)
