@@ -81,13 +81,13 @@ std::shared_ptr<cMap> cMapManager::GetMapData(unsigned int a_ID)
 
 
 
-bool cMapManager::CreateMap(unsigned int & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale)
+bool cMapManager::CreateMap(unsigned int & a_MapID, cMap::eMapIcon a_MapType, int a_X, int a_Z, unsigned int a_Scale)
 {
 	cCSLock Lock(m_CS);
 
 	a_MapID = NextID();
 
-	auto Map = std::make_shared<cMap>(a_MapID, a_MapType, a_CenterX, a_CenterY, m_World, a_Scale);
+	auto Map = std::make_shared<cMap>(a_MapID, a_MapType, a_X, a_Z, m_World, a_Scale);
 	auto [it, inserted] = m_MapData.try_emplace(a_MapID, Map);
 	UNUSED(it);
 
@@ -96,6 +96,12 @@ bool cMapManager::CreateMap(unsigned int & a_MapID, short a_MapType, int a_Cente
 		// Either the IDs wrapped or something went horribly wrong
 		LOGWARN(fmt::format(FMT_STRING("Could not craft map {} - too many maps in use?"), a_MapID));
 		return false;
+	}
+
+	if ((a_MapType != cMap::eMapIcon::E_MAP_ICON_NONE) && (a_MapType != cMap::eMapIcon::E_MAP_ICON_WHITE_ARROW))
+	{
+		Map->AddDecorator(cMap::DecoratorType::PERSISTENT, 0, a_MapType, { a_X, 0, a_Z }, 180, "");
+		Map->FillAndSketch();
 	}
 
 	return true;

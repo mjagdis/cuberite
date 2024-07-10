@@ -2038,6 +2038,10 @@ std::pair<cMap::eMapIcon, UInt8> cProtocol_1_8_0::GetProtocolMapIcon(cMap::eMapI
 {
 	switch (a_Icon)
 	{
+		case cMap::eMapIcon::E_MAP_ICON_NONE:                // This should never occur but...
+			a_Icon = cMap::eMapIcon::E_MAP_ICON_SMALL_WHITE_CIRCLE;
+			// Fall through
+
 		case cMap::eMapIcon::E_MAP_ICON_WHITE_ARROW:         // Players
 		case cMap::eMapIcon::E_MAP_ICON_GREEN_ARROW:
 		case cMap::eMapIcon::E_MAP_ICON_RED_ARROW:

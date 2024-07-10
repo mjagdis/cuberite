@@ -8,11 +8,328 @@
 #include "BlockEntities/BannerEntity.h"
 #include "BlockInfo.h"
 #include "Blocks/BlockHandler.h"
+#include "ChunkStay.h"
 #include "ClientHandle.h"
 #include "Entities/Player.h"
 #include "FastRandom.h"
 #include "Map.h"
 #include "World.h"
+
+
+
+
+
+class cMapUpdaterEngine : public cChunkStay
+{
+protected:
+
+	std::shared_ptr<cMap> m_Map;
+
+public:
+
+	cMapUpdaterEngine(cMap & a_Map):
+		cChunkStay(),
+		m_Map(a_Map.shared_from_this())
+	{
+	}
+
+	virtual ~cMapUpdaterEngine(void)
+	{
+		delete this;
+	}
+
+	virtual void Start(cChunkCoords & a_StartChunk, cChunkCoords & a_EndChunk)
+	{
+		for (int ChunkZ = a_StartChunk.m_ChunkZ; ChunkZ <= a_EndChunk.m_ChunkZ; ++ChunkZ)
+		{
+			for (int ChunkX = a_StartChunk.m_ChunkX; ChunkX <= a_EndChunk.m_ChunkX; ++ChunkX)
+			{
+				Add(ChunkX, ChunkZ);
+			}
+		}
+		Enable(*m_Map->m_World->GetChunkMap());
+	}
+
+	virtual void OnDisabled() override final {}
+
+protected:
+
+	virtual void OnChunkAvailable(int a_ChunkX, int a_ChunkZ) override
+	{
+		cCSLock m_Lock(m_Map->m_CS);
+
+		m_Map->m_World->DoWithChunk(a_ChunkX, a_ChunkZ, [this](cChunk & a_Chunk)
+			{
+				// Scan decorators in this region and remove any non-player, non-manual types that
+				// don't exist or have moved (in which case there is another decorator for it).
+				for (auto itr = m_Map->m_Decorators.begin(); itr != m_Map->m_Decorators.end();)
+				{
+					bool exists = true;
+
+					cChunkCoords DecoratorChunk = cChunkDef::BlockToChunk(itr->second.m_Position);
+
+					// While the InRange area might extend outside the map area that needn't
+					// concern us since there should not be any decorators that aren't actually
+					// on the map.
+					if ((DecoratorChunk.m_ChunkX == a_Chunk.GetPosX()) && (DecoratorChunk.m_ChunkZ == a_Chunk.GetPosZ())
+					&& InRange(itr->second.m_Position.x, itr->second.m_Position.z))
+					{
+						switch (itr->first.m_Type)
+						{
+							case cMap::DecoratorType::PLAYER:
+							case cMap::DecoratorType::FRAME:
+							{
+								// Player markers update as they move so we only need to know
+								// the player exists. Frame markers are static until we remove
+								// them here and could have been broken and placed elsewhere
+								// since we last checked.
+								exists = false;
+								a_Chunk.DoWithEntityByID(itr->first.m_Id, [&itr] (cEntity & a_Entity)
+									{
+										return a_Entity.IsPlayer()
+										|| (itr->second.m_Position == (a_Entity.GetPosition().Floor()) && (std::abs(itr->second.m_Yaw - a_Entity.GetYaw()) < 22.5));
+									},
+									exists
+								);
+								break;
+							}
+
+							case cMap::DecoratorType::BANNER:
+							{
+								// Banner markers are block entities so we just check that the block
+								// here is a banner with the expected colour and name.
+								auto BlockEntity = a_Chunk.GetBlockEntity(itr->second.m_Position.Floor());
+								exists = (BlockEntity
+								&& ((BlockEntity->GetBlockType() == E_BLOCK_WALL_BANNER) || (BlockEntity->GetBlockType() == E_BLOCK_STANDING_BANNER))
+								&& (itr->second.m_Icon == m_Map->BannerColourToIcon(static_cast<cBannerEntity *>(BlockEntity)->GetBaseColor()))
+								&& !itr->second.m_Name.compare(static_cast<cBannerEntity *>(BlockEntity)->GetCustomName()));
+								break;
+							}
+
+							default:
+							{
+								exists = true;
+								break;
+							}
+						}
+					}
+
+					if (exists)
+					{
+						++itr;
+					}
+					else
+					{
+						itr = m_Map->m_Decorators.erase(itr);
+						m_Map->m_Dirty = true;
+						m_Map->m_Send = true;
+					}
+				}
+
+				// The position of the corner of the chunk to which chunk-relative positions refer.
+				int BaseX = a_Chunk.GetPosX() * cChunkDef::Width;
+				int BaseZ = a_Chunk.GetPosZ() * cChunkDef::Width;
+
+				// Scan the blocks for this chunk and update.
+				// Java Edition: the colour of a map pixel matches the colour of the most common
+				// opaque block that it covers.
+				// Bedrock Edition: the colour of a map pixel matches the colour of the top left
+				// opaque block of the blocks covered by the pixel.
+				// Cuberite: as Bedrock Edition.
+				for (int RelX = 0; RelX < cChunkDef::Width; RelX += m_Map->GetPixelWidth())
+				{
+					for (int RelZ = 0; RelZ < cChunkDef::Width; RelZ += m_Map->GetPixelWidth())
+					{
+						if (InRange(BaseX + RelX, BaseZ + RelZ))
+						{
+							int X = (BaseX + RelX - m_Map->m_CenterX) / m_Map->GetPixelWidth() + m_Map->MAP_WIDTH / 2;
+							int Z = (BaseZ + RelZ - m_Map->m_CenterZ) / m_Map->GetPixelWidth() + m_Map->MAP_HEIGHT / 2;
+
+							// SetPixel checks that the point is within the map bounds so we don't
+							// need to worry that aligning the range with chunk borders may have
+							// extended it off the map edge.
+							m_Map->SetPixel(X, Z, PixelColour(a_Chunk, RelX, RelZ));
+						}
+					}
+				}
+
+				return true;
+			}
+		);
+	}
+
+
+private:
+
+	virtual bool InRange(int a_TargetX, int a_TargetZ) const = 0;
+
+
+	ColourID PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const
+	{
+		static const std::array<unsigned char, 4> BrightnessID = { { 3, 0, 1, 2 } };  // Darkest to lightest
+
+		auto Height = a_Chunk.GetHeight(a_RelX, a_RelZ);
+		auto HeightRange = cChunkDef::Height;
+
+		BLOCKTYPE TargetBlock;
+		BLOCKMETATYPE TargetMeta;
+		a_Chunk.GetBlockTypeMeta(a_RelX, Height, a_RelZ, TargetBlock, TargetMeta);
+		auto ColourID = cBlockHandler::For(TargetBlock).GetMapBaseColourID(TargetMeta);
+
+		// Descend through the blocks looking for the first block that has a non-transparent colour.
+		while ((ColourID == cMap::eMapColor::E_MAP_COLOR_TRANSPARENT) && (--Height != -1))
+		{
+			a_Chunk.GetBlockTypeMeta(a_RelX, Height, a_RelZ, TargetBlock, TargetMeta);
+			ColourID = cBlockHandler::For(TargetBlock).GetMapBaseColourID(TargetMeta);
+		}
+
+		// Descend through water blocks ignoring transparent blocks and adjusting the brightness
+		// scaling as we go. The colour remains the colour of the top water block but gets darker
+		// the further we descend.
+		if (IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock))
+		{
+			// We can see a maximum of number of blocks down when mapping. Beyond that it's just
+			// uniformly dark.
+			HeightRange = m_Map->DEFAULT_WATER_DEPTH;
+
+			auto Surface = Height;
+			while ((IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock)) && (--Height != -1) && (Surface - Height < HeightRange - 1))
+			{
+				TargetBlock = a_Chunk.GetBlock(a_RelX, Height, a_RelZ);
+			}
+
+			// The brightness of the water is based on the depth of water rather than the absolute
+			// height of the sea floor (which we may not even have reached).
+			Height = HeightRange - 1 - (Surface - Height);
+		}
+
+		// Multiply base color ID by 4 and add brightness ID
+		const int BrightnessIDSize = static_cast<int>(BrightnessID.size());
+		return ColourID * 4 + BrightnessID[static_cast<size_t>(Clamp<int>((BrightnessIDSize * Height) / HeightRange, 0, BrightnessIDSize - 1))];
+	}
+};
+
+
+
+
+
+class cMapUpdater final : public cMapUpdaterEngine
+{
+private:
+
+	const int m_CenterX;
+	const int m_CenterZ;
+	const int m_Radius;
+
+
+public:
+	cMapUpdater(cMap & a_Map, int a_CenterX, int a_CenterZ, int a_Radius) :
+		cMapUpdaterEngine(a_Map),
+		m_CenterX(a_CenterX),
+		m_CenterZ(a_CenterZ),
+		m_Radius(a_Radius)
+	{}
+
+	virtual ~cMapUpdater(void) {}
+
+
+	using cMapUpdaterEngine::Start;
+
+	void Start()
+	{
+		// Take a box around the centre position, clip it to the edge of the map then convert to chunk coords.
+		// Note that this implies extending the box edges outwards to the nearest chunk boundary so there may
+		// then be portions of the box that are off-map.
+		cChunkCoords StartChunk = cChunkDef::BlockToChunk(
+			{
+				Clamp(m_CenterX - m_Radius, m_Map->m_CenterX - m_Map->GetPixelWidth() * m_Map->MAP_WIDTH / 2, m_Map->m_CenterX + m_Map->GetPixelWidth() * m_Map->MAP_WIDTH / 2),
+				0,
+				Clamp(m_CenterZ - m_Radius, m_Map->m_CenterZ - m_Map->GetPixelWidth() * m_Map->MAP_HEIGHT / 2, m_Map->m_CenterZ + m_Map->GetPixelWidth() * m_Map->MAP_HEIGHT / 2)
+			}
+		);
+		cChunkCoords EndChunk = cChunkDef::BlockToChunk(
+			{
+				Clamp(m_CenterX + m_Radius, m_Map->m_CenterX - m_Map->GetPixelWidth() * m_Map->MAP_WIDTH / 2, m_Map->m_CenterX + m_Map->GetPixelWidth() * m_Map->MAP_WIDTH / 2),
+				0,
+				Clamp(m_CenterZ + m_Radius, m_Map->m_CenterZ - m_Map->GetPixelWidth() * m_Map->MAP_HEIGHT / 2, m_Map->m_CenterZ + m_Map->GetPixelWidth() * m_Map->MAP_HEIGHT / 2)
+			}
+		);
+
+		Start(StartChunk, EndChunk);
+	}
+
+
+	bool OnAllChunksAvailable(void) override
+	{
+		return true;
+	}
+
+
+protected:
+
+	bool InRange(int a_TargetX, int a_TargetZ) const override
+	{
+		int dX = a_TargetX - m_CenterX;
+		int dZ = a_TargetZ - m_CenterZ;
+
+		return ((dX * dX) + (dZ * dZ) < m_Radius * m_Radius);
+	}
+};
+
+
+
+
+class cMapSketchUpdater final : public cMapUpdaterEngine
+{
+public:
+	cMapSketchUpdater(cMap & a_Map) :
+		cMapUpdaterEngine(a_Map)
+	{
+	}
+
+	virtual ~cMapSketchUpdater(void) {}
+
+
+	virtual void Start(cChunkCoords & a_StartChunk, cChunkCoords & a_EndChunk) override
+	{
+		cCSLock m_Lock(m_Map->m_CS);
+		m_Map->m_Busy++;
+
+		cMapUpdaterEngine::Start(a_StartChunk, a_EndChunk);
+	}
+
+
+	virtual void OnChunkAvailable(int a_ChunkX, int a_ChunkZ) override
+	{
+		cCSLock m_Lock(m_Map->m_CS);
+
+		cMapUpdaterEngine::OnChunkAvailable(a_ChunkX, a_ChunkZ);
+
+		// We're not done yet so there are no map changes to send or save
+		// (but sending decorator updates is fine).
+		m_Map->m_Dirty = false;
+		m_Map->m_ChangeStartX = m_Map->MAP_WIDTH - 1;
+		m_Map->m_ChangeEndX = 0;
+		m_Map->m_ChangeStartZ = m_Map->MAP_HEIGHT - 1;
+		m_Map->m_ChangeEndZ = 0;
+	}
+
+	bool OnAllChunksAvailable(void) override
+	{
+		cCSLock m_Lock(m_Map->m_CS);
+
+		m_Map->Sketch();
+
+		return true;
+	}
+
+protected:
+
+	bool InRange(int a_TargetX, int a_TargetZ) const override
+	{
+		return true;
+	}
+};
 
 
 
@@ -24,6 +341,7 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 	m_CenterX(0),
 	m_CenterZ(0),
 	m_Radius((a_World->GetDimension() != dimNether) ? DEFAULT_RADIUS : DEFAULT_RADIUS / 2),
+	m_Busy(0),
 	m_Dirty(false),  // This constructor is for an empty map object which will be filled by the caller with the correct values - it does not need saving.
 	m_Send(false),
 	m_ChangeStartX(MAP_WIDTH - 1),
@@ -45,12 +363,13 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 
 
 
-cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale):
+cMap::cMap(unsigned int a_ID, eMapIcon a_MapType, int a_X, int a_Z, cWorld * a_World, unsigned int a_Scale):
 	m_ID(a_ID),
 	m_Scale(a_Scale),
-	m_CenterX(FAST_FLOOR_DIV(a_CenterX, cChunkDef::Width * 8) * cChunkDef::Width * 8 + cChunkDef::Width * 4),
-	m_CenterZ(FAST_FLOOR_DIV(a_CenterZ, cChunkDef::Width * 8) * cChunkDef::Width * 8 + cChunkDef::Width * 4),
+	m_CenterX(SnapToGrid(a_X, a_Scale)),
+	m_CenterZ(SnapToGrid(a_Z, a_Scale)),
 	m_Radius((a_World->GetDimension() != dimNether) ? DEFAULT_RADIUS : DEFAULT_RADIUS / 2),
+	m_Busy(0),
 	m_Dirty(true),  // This constructor is for creating a brand new map in game, it will always need saving.
 	m_Send(true),
 	m_ChangeStartX(MAP_WIDTH - 1),
@@ -58,8 +377,10 @@ cMap::cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWo
 	m_ChangeStartZ(MAP_HEIGHT - 1),
 	m_ChangeEndZ(0),
 	m_Locked(false),
-	m_TrackingPosition(a_MapType == E_EMPTY_MAP_TYPE_SIMPLE ? false : true),
-	m_UnlimitedTracking(a_MapType == E_EMPTY_MAP_TYPE_EXPLORER ? true : false),
+	// No tracking if a player icon is not requested.
+	m_TrackingPosition(a_MapType == E_MAP_ICON_NONE ? false : true),
+	// Unlimited tracking on explorer maps.
+	m_UnlimitedTracking(((a_MapType != E_MAP_ICON_NONE) && (a_MapType != E_MAP_ICON_WHITE_ARROW)) ? true : false),
 	m_TrackingThreshold(DEFAULT_TRACKING_DISTANCE),
 	m_FarTrackingThreshold(DEFAULT_FAR_TRACKING_DISTANCE),
 	m_World(a_World),
@@ -78,6 +399,7 @@ cMap::cMap(unsigned int a_ID, cMap & a_Map):
 	m_CenterX(a_Map.m_CenterX),
 	m_CenterZ(a_Map.m_CenterZ),
 	m_Radius(a_Map.m_Radius),
+	m_Busy(0),
 	m_Dirty(true),
 	m_Send(true),
 	m_ChangeStartX(0),
@@ -94,6 +416,9 @@ cMap::cMap(unsigned int a_ID, cMap & a_Map):
 {
 	ASSERT(a_Map.m_CS.IsLocked());
 
+	// FIXME: really we don't want to do this until the source map is no longer busy otherwise
+	// we could copy a map that is halfway through being sketched. Which could result in the
+	// player crafting a map that has areas filled in that they've never actually visited.
 	memcpy(m_Data, a_Map.m_Data, sizeof(m_Data) / sizeof(m_Data[0]));
 }
 
@@ -165,7 +490,11 @@ void cMap::Tick()
 		{
 			for (const auto Client : m_ClientsInCurrentTick)
 			{
-				if (m_ClientsWithCurrentData.find(Client) == m_ClientsWithCurrentData.end())
+				// If the map is busy it's being filled and sketched. If that is the case we always
+				// send the changed area even if the client may not be up to date. The changed area
+				// will be empty until the sketching is complete so no data will be sent, but we do
+				// want to update decorators.
+				if (!m_Busy && m_ClientsWithCurrentData.find(Client) == m_ClientsWithCurrentData.end())
 				{
 					// LOG(fmt::format(FMT_STRING("{}: map {} send complete"), std::this_thread::get_id(), m_ID));
 					Client->SendMapData(*this, 0, 0, MAP_WIDTH - 1, MAP_HEIGHT - 1);
@@ -221,12 +550,110 @@ bool cMap::SetPixel(int a_X, int a_Z, ColorID a_Data)
 
 
 
-bool cMap::InRange(int a_CenterX, int a_CenterZ, int a_TargetX, int a_TargetZ) const
+bool cMap::WaterAt(int a_X, int a_Z)
 {
-	int dX = a_TargetX - a_CenterX;
-	int dZ = a_TargetZ - a_CenterZ;
+	ColourID C = GetPixel(a_X, a_Z);
 
-	return ((dX * dX) + (dZ * dZ) < m_Radius * m_Radius);
+	return ((C / 4) == cMap::eMapColor::E_MAP_COLOR_WATER)
+	|| ((C / 4) == cMap::eMapColor::E_MAP_COLOR_ORANGE)
+	|| (C == ((cMap::eMapColor::E_MAP_COLOR_TRANSPARENT * 4) | 1));
+}
+
+
+
+
+
+void cMap::Sketch(void)
+{
+	// Reduce it to a sketch.
+	for (int Z = 0; Z < MAP_HEIGHT; ++Z)
+	{
+		int StripeOffset = GetRandomProvider().RandInt(4);
+
+		for (int X = 0; X < MAP_WIDTH; ++X)
+		{
+			auto ColourID = GetPixel(X, Z);
+
+			if ((ColourID / 4) == cMap::eMapColor::E_MAP_COLOR_WATER)
+			{
+				auto Brightness = (ColourID & 3);
+
+				if (Brightness != 3)
+				{
+					// Shallow water inverts the brightness.
+					static const std::array<unsigned char, 4> InvertedBrightness = { { 1, 0, 3, 2 } };
+					ColourID = SKETCH_WATER_COLOUR | InvertedBrightness[Brightness];
+				}
+				else
+				{
+					// Deep water alternates stripes of varying brightness with blank lines.
+					if ((Z & 1))
+					{
+						static const std::array<unsigned char, 5> Stripe = { { 0, 1, 2, 1, 0 } };
+						ColourID = SKETCH_WATER_COLOUR | Stripe[((StripeOffset + X) >> 3) % 5];
+					}
+					else
+					{
+						// The non-zero brightness differentiates this transparency from the
+						// brightness 0 transparency used for land.
+						ColourID = (cMap::eMapColor::E_MAP_COLOR_TRANSPARENT * 4) | 1;
+					}
+				}
+
+			}
+			else
+			{
+				// Anything other than water is uninteresting.
+				ColourID = (cMap::eMapColor::E_MAP_COLOR_TRANSPARENT * 4) | 0;
+
+				if (WaterAt(X - 1, Z) || WaterAt(X + 1, Z) || WaterAt(X, Z - 1) || WaterAt(X, Z + 1))
+				{
+					ColourID = SKETCH_OUTLINE_COLOUR;
+				}
+				else if (WaterAt(X - 1, Z - 1) || WaterAt(X + 1, Z - 1) || WaterAt(X - 1, Z + 1) || WaterAt(X + 1, Z + 1))
+				{
+					ColourID = SKETCH_CORNER_COLOUR;
+				}
+			}
+
+			SetPixel(X, Z, ColourID);
+		}
+	}
+
+	// Now we're done.
+	// m_ChangeStartX = 0;
+	// m_ChangeEndX = MAP_WIDTH - 1;
+	// m_ChangeStartZ = 0;
+	// m_ChangeEndZ = MAP_HEIGHT - 1;
+	// m_Dirty = true;
+	// m_Send = true;
+}
+
+
+
+
+
+void cMap::FillAndSketch()
+{
+	// Take the map area and convert to chunk coords.
+	// Note that this implies extending the box edges outwards to the nearest chunk boundary so there may
+	// then be portions of the box that are off-map.
+	cChunkCoords StartChunk = cChunkDef::BlockToChunk(
+		{
+			m_CenterX - GetPixelWidth() * MAP_WIDTH / 2,
+			0,
+			m_CenterZ - GetPixelWidth() * MAP_HEIGHT / 2,
+		}
+	);
+	cChunkCoords EndChunk = cChunkDef::BlockToChunk(
+		{
+			m_CenterX + GetPixelWidth() * MAP_WIDTH / 2,
+			0,
+			m_CenterZ + GetPixelWidth() * MAP_HEIGHT / 2,
+		}
+	);
+
+	(new cMapSketchUpdater(*this))->Start(StartChunk, EndChunk);
 }
 
 
@@ -235,194 +662,24 @@ bool cMap::InRange(int a_CenterX, int a_CenterZ, int a_TargetX, int a_TargetZ) c
 
 void cMap::UpdateRadius(const cPlayer * a_Player)
 {
-	Vector3i Center = a_Player->GetPosition();
+	Vector3i Center = a_Player->GetPosition().Floor();
 
-	// Take a box around the player position, clip it to the edge of the map then convert to chunk coords.
-	// Note that this implies extending the box edges outwards to the nearest chunk boundary so there may
-	// then be portions of the box that are off-map.
-	cChunkCoords StartChunk = cChunkDef::BlockToChunk(
-		{
-			Clamp(Center.x - m_Radius, m_CenterX - GetPixelWidth() * MAP_WIDTH / 2, m_CenterX + GetPixelWidth() * MAP_WIDTH / 2),
-			0,
-			Clamp(Center.z - m_Radius, m_CenterZ - GetPixelWidth() * MAP_HEIGHT / 2, m_CenterZ + GetPixelWidth() * MAP_HEIGHT / 2)
-		}
-	);
-	cChunkCoords EndChunk = cChunkDef::BlockToChunk(
-		{
-			Clamp(Center.x + m_Radius, m_CenterX - GetPixelWidth() * MAP_WIDTH / 2, m_CenterX + GetPixelWidth() * MAP_WIDTH / 2),
-			0,
-			Clamp(Center.z + m_Radius, m_CenterZ - GetPixelWidth() * MAP_HEIGHT / 2, m_CenterZ + GetPixelWidth() * MAP_HEIGHT / 2)
-		}
-	);
-
-	// For each chunk within that box...
-	for (int ChunkX = StartChunk.m_ChunkX; ChunkX <= EndChunk.m_ChunkX; ++ChunkX)
-	{
-		for (int ChunkZ = StartChunk.m_ChunkZ; ChunkZ <= EndChunk.m_ChunkZ; ++ChunkZ)
-		{
-			m_World->DoWithChunk(ChunkX, ChunkZ, [this, Center](cChunk & a_Chunk)
-				{
-					// Scan decorators in this region and remove any non-player, non-manual types that
-					// don't exist or have moved (in which case there is another decorator for it).
-					for (auto itr = m_Decorators.begin(); itr != m_Decorators.end();)
-					{
-						bool exists = true;
-
-						cChunkCoords DecoratorChunk = cChunkDef::BlockToChunk(itr->second.m_Position);
-
-						// While the InRange area might extend outside the map area that needn't
-						// concern us since there should not be any decorators that aren't actually
-						// on the map.
-						if ((DecoratorChunk.m_ChunkX == a_Chunk.GetPosX()) && (DecoratorChunk.m_ChunkZ == a_Chunk.GetPosZ())
-						&& InRange(Center.x, Center.z, itr->second.m_Position.x, itr->second.m_Position.z))
-						{
-							switch (itr->first.m_Type)
-							{
-								case DecoratorType::PLAYER:
-								case DecoratorType::FRAME:
-								{
-									// Player markers update as they move so we only need to know
-									// the player exists. Frame markers are static until we remove
-									// them here and could have been broken and placed elsewhere
-									// since we last checked.
-									exists = false;
-									a_Chunk.DoWithEntityByID(itr->first.m_Id, [&itr] (cEntity & a_Entity)
-										{
-											return a_Entity.IsPlayer()
-											|| (itr->second.m_Position == (a_Entity.GetPosition().Floor()) && (std::abs(itr->second.m_Yaw - a_Entity.GetYaw()) < 22.5));
-										},
-										exists
-									);
-									break;
-								}
-
-								case DecoratorType::BANNER:
-								{
-									// Banner markers are block entities so we just check that the block
-									// here is a banner with the expected colour and name.
-									auto BlockEntity = a_Chunk.GetBlockEntity(itr->second.m_Position.Floor());
-									exists = (BlockEntity
-									&& ((BlockEntity->GetBlockType() == E_BLOCK_WALL_BANNER) || (BlockEntity->GetBlockType() == E_BLOCK_STANDING_BANNER))
-									&& (itr->second.m_Icon == BannerColourToIcon(static_cast<cBannerEntity *>(BlockEntity)->GetBaseColor()))
-									&& !itr->second.m_Name.compare(static_cast<cBannerEntity *>(BlockEntity)->GetCustomName()));
-									break;
-								}
-
-								default:
-								{
-									exists = true;
-									break;
-								}
-							}
-						}
-
-						if (exists)
-						{
-							++itr;
-						}
-						else
-						{
-							itr = m_Decorators.erase(itr);
-							m_Dirty = true;
-							m_Send = true;
-						}
-					}
-
-					// The position of the corner of the chunk to which chunk-relative positions refer.
-					int BaseX = a_Chunk.GetPosX() * cChunkDef::Width;
-					int BaseZ = a_Chunk.GetPosZ() * cChunkDef::Width;
-
-					// Scan the blocks for this chunk and update.
-					// Java Edition: the colour of a map pixel matches the colour of the most common
-					// opaque block that it covers.
-					// Bedrock Edition: the colour of a map pixel matches the colour of the top left
-					// opaque block of the blocks covered by the pixel.
-					// Cuberite: as Bedrock Edition.
-					for (int RelX = 0; RelX < cChunkDef::Width; RelX += GetPixelWidth())
-					{
-						for (int RelZ = 0; RelZ < cChunkDef::Width; RelZ += GetPixelWidth())
-						{
-							if (InRange(Center.x, Center.z, BaseX + RelX, BaseZ + RelZ))
-							{
-								int a_X = (BaseX + RelX - m_CenterX) / GetPixelWidth() + MAP_WIDTH / 2;
-								int a_Z = (BaseZ + RelZ - m_CenterZ) / GetPixelWidth() + MAP_HEIGHT / 2;
-
-								// SetPixel checks that the point is within the map bounds so we don't
-								// need to worry that aligning the range with chunk borders may have
-								// extended it off the map edge.
-								SetPixel(a_X, a_Z, PixelColour(a_Chunk, RelX, RelZ));
-							}
-						}
-					}
-
-					return true;
-				}
-			);
-		}
-	}
+	(new cMapUpdater(*this, Center.x, Center.z, m_Radius))->Start();
 }
 
 
 
 
 
-ColourID cMap::PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const
-{
-	static const std::array<unsigned char, 4> BrightnessID = { { 3, 0, 1, 2 } };  // Darkest to lightest
-
-	auto Height = a_Chunk.GetHeight(a_RelX, a_RelZ);
-	auto HeightRange = cChunkDef::Height;
-
-	BLOCKTYPE TargetBlock;
-	BLOCKMETATYPE TargetMeta;
-	a_Chunk.GetBlockTypeMeta(a_RelX, Height, a_RelZ, TargetBlock, TargetMeta);
-	auto ColourID = cBlockHandler::For(TargetBlock).GetMapBaseColourID(TargetMeta);
-
-	// Descend through the blocks looking for the first block that has a non-transparent colour.
-	while ((ColourID == E_MAP_COLOR_TRANSPARENT) && (--Height != -1))
-	{
-		a_Chunk.GetBlockTypeMeta(a_RelX, Height, a_RelZ, TargetBlock, TargetMeta);
-		ColourID = cBlockHandler::For(TargetBlock).GetMapBaseColourID(TargetMeta);
-	}
-
-	// Descend through water blocks ignoring transparent blocks and adjusting the brightness
-	// scaling as we go. The colour remains the colour of the top water block but gets darker
-	// the further we descend.
-	if (IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock))
-	{
-		// We can see a maximum of number of blocks down when mapping. Beyond that it's just
-		// uniformly dark.
-		HeightRange = DEFAULT_WATER_DEPTH;
-
-		auto Surface = Height;
-		while ((IsBlockWater(TargetBlock) || cBlockInfo::IsTransparent(TargetBlock)) && (--Height != -1) && (Surface - Height < HeightRange - 1))
-		{
-			TargetBlock = a_Chunk.GetBlock(a_RelX, Height, a_RelZ);
-		}
-
-		// The brightness of the water is based on the depth of water rather than the absolute
-		// height of the sea floor (which we may not even have reached).
-		Height = HeightRange - 1 - (Surface - Height);
-	}
-
-	// Multiply base color ID by 4 and add brightness ID
-	const int BrightnessIDSize = static_cast<int>(BrightnessID.size());
-	return ColourID * 4 + BrightnessID[static_cast<size_t>(Clamp<int>((BrightnessIDSize * Height) / HeightRange, 0, BrightnessIDSize - 1))];
-}
-
-
-
-
-
-void cMap::UpdateClient(const cPlayer * a_Player, bool a_UpdateMap)
+void cMap::UpdateClient(const cPlayer * a_Player, bool a_IsEquipped)
 {
 	ASSERT(a_Player != nullptr);
 
 	if (a_Player->GetWorld() == m_World)
 	{
-		if (m_TrackingPosition && (m_UnlimitedTracking || GetTrackingDistance(a_Player->GetPosition()) <= GetTrackingThreshold() * GetPixelWidth()))
+		if (m_TrackingPosition && (m_UnlimitedTracking || GetTrackingDistance(a_Player->GetPosition().Floor()) <= GetTrackingThreshold() * GetPixelWidth()))
 		{
-			AddDecorator(DecoratorType::PLAYER, a_Player->GetUniqueID(), eMapIcon::E_MAP_ICON_WHITE_ARROW, a_Player->GetPosition(), a_Player->GetYaw(), "");
+			AddDecorator(DecoratorType::PLAYER, a_Player->GetUniqueID(), eMapIcon::E_MAP_ICON_WHITE_ARROW, a_Player->GetPosition().Floor(), a_Player->GetYaw(), "");
 		}
 		else
 		{
@@ -430,9 +687,9 @@ void cMap::UpdateClient(const cPlayer * a_Player, bool a_UpdateMap)
 		}
 	}
 
-	if (a_UpdateMap)
+	if (a_IsEquipped)
 	{
-		if (!m_Locked && a_Player->GetWorld() == m_World)
+		if (!m_Busy && !m_Locked && a_Player->GetWorld() == m_World)
 		{
 			UpdateRadius(a_Player);
 		}
@@ -523,7 +780,7 @@ void cMap::SetPosition(int a_CenterX, int a_CenterZ)
 
 
 
-void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, AString a_Name)
+void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3i & a_Position, double a_Yaw, AString a_Name)
 {
 	int MapX = static_cast<int>(FAST_FLOOR_DIV(256.0 * (a_Position.x - GetCenterX()) / GetPixelWidth(), MAP_WIDTH));
 	int MapZ = static_cast<int>(FAST_FLOOR_DIV(256.0 * (a_Position.z - GetCenterZ()) / GetPixelWidth(), MAP_HEIGHT));
@@ -580,8 +837,8 @@ void cMap::AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, cons
 			m_Send |= Changes;
 
 			// The map needs saving if there were changes to a non-player marker and
-			// the position of the marked entity has changed by at least a block.
-			m_Dirty |= (Changes && (a_Type != DecoratorType::PLAYER) && !itr->second.m_Position.EqualsEps(a_Position, 1.0));
+			// the position of the marked entity has changed.
+			m_Dirty |= (Changes && (a_Type != DecoratorType::PLAYER) && (itr->second.m_Position != a_Position));
 
 			return;
 		}
@@ -620,13 +877,11 @@ void cMap::RemoveDecorator(cMap::DecoratorType a_Type, UInt32 a_Id)
 
 
 
-void cMap::RemoveFrame(const Vector3d & a_Position, double a_Yaw)
+void cMap::RemoveFrame(const Vector3i & a_Position, double a_Yaw)
 {
-	Vector3i Position = a_Position.Floor();
-
 	for (auto itr = m_Decorators.begin(); itr != m_Decorators.end(); ++itr)
 	{
-		if ((itr->first.m_Type == DecoratorType::FRAME) && (itr->second.m_Position == Position) && (itr->second.m_Yaw == a_Yaw))
+		if ((itr->first.m_Type == DecoratorType::FRAME) && (itr->second.m_Position == a_Position) && (itr->second.m_Yaw == a_Yaw))
 		{
 			// There should be only one.
 			m_Decorators.erase(itr);

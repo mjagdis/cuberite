@@ -7,11 +7,15 @@
 
 
 
-/** If the generation queue size exceeds this number, a warning will be output */
-const size_t QUEUE_WARNING_LIMIT = 1000;
-
-/** If the generation queue size exceeds this number, chunks with no clients will be skipped */
-const size_t QUEUE_SKIP_LIMIT = 500;
+/** If the generation queue size exceeds the warning limit a warning will
+be output. If the generation queue size exceeds the skip limit chunks with
+no clients will be skipped.
+Note that creating a scale 4 explorer map will want to look at 128 x 128
+chunks at once and they are quite likely to neither have clients nor be
+already generated.
+*/
+const size_t QUEUE_WARNING_LIMIT = 5 * 128 * 128;
+const size_t QUEUE_SKIP_LIMIT = 10 * 128 * 128;
 
 
 
