@@ -57,6 +57,7 @@ class cMap :
 public:
 	enum eMapIcon
 	{
+		E_MAP_ICON_NONE               = -1,  ///< Used for plain non-locator maps.
 		E_MAP_ICON_WHITE_ARROW        = 0,  ///< Used for players.
 		E_MAP_ICON_GREEN_ARROW        = 1,  ///< Used for item frames.
 		E_MAP_ICON_RED_ARROW          = 2,
@@ -152,9 +153,9 @@ public:
 
 		public:
 
-			Value(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, Int8 a_MapX, Int8 a_MapZ, const AString & a_Name) :
+			Value(eMapIcon a_Icon, const Vector3i & a_Position, double a_Yaw, Int8 a_MapX, Int8 a_MapZ, const AString & a_Name) :
 				m_Icon(a_Icon),
-				m_Position(a_Position.Floor()),
+				m_Position(a_Position),
 				m_Yaw(FloorC(a_Yaw)),
 				m_MapX(a_MapX),
 				m_MapZ(a_MapZ),
@@ -166,7 +167,7 @@ public:
 			{
 			}
 
-			bool Update(eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, Int8 a_MapX, Int8 a_MapZ, bool a_Spinning, const AString & a_Name)
+			bool Update(eMapIcon a_Icon, const Vector3i & a_Position, double a_Yaw, Int8 a_MapX, Int8 a_MapZ, bool a_Spinning, const AString & a_Name)
 			{
 				UInt8 Rot = m_CurrentRot;
 
@@ -178,7 +179,7 @@ public:
 				if ((a_MapX != m_MapX) || (a_MapZ != m_MapZ) || (Rot != m_CurrentRot) || (a_Icon != m_Icon) || m_Name.compare(a_Name))
 				{
 					m_Icon = a_Icon;
-					m_Position = a_Position.Floor();
+					m_Position = a_Position;
 					m_Yaw = FloorC(a_Yaw);
 					m_MapX = a_MapX;
 					m_MapZ = a_MapZ;
@@ -230,21 +231,7 @@ public:
 		};
 	};
 
-	static const int MAP_WIDTH = 128;
-	static const int MAP_HEIGHT = 128;
-	static const int DEFAULT_RADIUS = 128;
-	static const int DEFAULT_WATER_DEPTH = 16;
-	static const int DEFAULT_TRACKING_DISTANCE = 320;
-	static const int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
-
 	// tolua_begin
-
-	enum eEmptyMapType
-	{
-		E_EMPTY_MAP_TYPE_LOCATOR = 0, /* Empty maps from older worlds are always locator maps */
-		E_EMPTY_MAP_TYPE_SIMPLE,
-		E_EMPTY_MAP_TYPE_EXPLORER,
-	};
 
 	/** @deprecated These are exported to Lua but are otherwise unused. */
 	enum eBaseColor
@@ -352,6 +339,21 @@ public:
 
 	// tolua_end
 
+private:
+
+	static const int MAP_WIDTH = 128;
+	static const int MAP_HEIGHT = 128;
+	static const int DEFAULT_RADIUS = 128;
+	static const int DEFAULT_WATER_DEPTH = 16;
+	static const int DEFAULT_TRACKING_DISTANCE = 320;
+	static const int DEFAULT_FAR_TRACKING_DISTANCE = 1026;
+
+	static const int SKETCH_WATER_COLOUR = (eMapColor::E_MAP_COLOR_ORANGE * 4);  // Colour for water. (No brightness.)
+	static const int SKETCH_OUTLINE_COLOUR = (eMapColor::E_MAP_COLOR_BROWN * 4) | 3;  // Colour to outline water with.
+	static const int SKETCH_CORNER_COLOUR = (eMapColor::E_MAP_COLOR_SAND * 4) | 0;  // Colour for outline corners to give them a slight anti-aliased look.
+
+public:
+
 	typedef std::set<cClientHandle *> cMapClientList;
 	typedef std::multimap<Decorator::Key, Decorator::Value> cMapDecoratorList;
 
@@ -359,7 +361,7 @@ public:
 	cMap(unsigned int a_ID, cWorld * a_World);
 
 	/** Construct an empty map at the specified coordinates. */
-	cMap(unsigned int a_ID, short a_MapType, int a_CenterX, int a_CenterZ, cWorld * a_World, unsigned int a_Scale = 3);
+	cMap(unsigned int a_ID, eMapIcon a_MapType, int a_X, int a_Z, cWorld * a_World, unsigned int a_Scale = 3);
 
 	/** Construct a filled map as a copy of the given map. */
 	cMap(unsigned int a_ID, cMap & a_Map);
@@ -371,8 +373,9 @@ public:
 	Clears the list holding registered clients and decorators */
 	void Tick();
 
-	/** Send next update packet to the specified player and remove invalid decorators / clients. */
-	void UpdateClient(const cPlayer * a_Player, bool a_UpdateMap);
+	/** Update the decorator for this client, fill in the local area if the map
+	is equipped and add the client to the list that will receive the next update. */
+	void UpdateClient(const cPlayer * a_Player, bool a_IsEquipped);
 
 	// tolua_begin
 
@@ -429,12 +432,12 @@ public:
 
 	unsigned int GetFarTrackingThreshold(void) const { return m_FarTrackingThreshold; }
 
-	unsigned int GetTrackingDistance(const Vector3d & a_Position) const
+	unsigned int GetTrackingDistance(const Vector3i & a_Position) const
 	{
-		return std::max(abs(FloorC(a_Position.x) - m_CenterX), abs(FloorC(a_Position.z) - m_CenterZ));
+		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
 	}
 
-	void AddMarker(UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, const AString & a_Name)
+	void AddMarker(UInt32 a_Id, eMapIcon a_Icon, const Vector3i & a_Position, double a_Yaw, const AString & a_Name)
 	{
 		AddDecorator(DecoratorType::PERSISTENT, a_Id, a_Icon, a_Position, a_Yaw, a_Name);
 	}
@@ -446,14 +449,14 @@ public:
 
 	// tolua_end
 
-	void AddBanner(unsigned int a_Colour, const Vector3d & a_Position, const AString & a_Name)
+	void AddBanner(unsigned int a_Colour, const Vector3i & a_Position, const AString & a_Name)
 	{
 		UInt32 Id = DecoratorIdFromPosition(a_Position);
 
 		AddDecorator(DecoratorType::BANNER, Id, BannerColourToIcon(a_Colour), a_Position, 180, a_Name);
 	}
 
-	void AddFrame(UInt32 a_Id, const Vector3d & a_Position, double a_Yaw)
+	void AddFrame(UInt32 a_Id, const Vector3i & a_Position, double a_Yaw)
 	{
 		AddDecorator(DecoratorType::FRAME, a_Id, E_MAP_ICON_GREEN_ARROW, a_Position, a_Yaw, "");
 	}
@@ -463,7 +466,7 @@ public:
 		RemoveDecorator(DecoratorType::FRAME, a_Id);
 	}
 
-	void RemoveFrame(const Vector3d & a_Position, double a_Yaw);
+	void RemoveFrame(const Vector3i & a_Position, double a_Yaw);
 
 	const cMapDecoratorList GetDecorators(void) const { return m_Decorators; }
 
@@ -471,19 +474,30 @@ public:
 
 private:
 
-	static eMapIcon BannerColourToIcon(unsigned int a_Colour)
+	static constexpr int SnapToGrid(int a_Coord, unsigned int a_Scale)
+	{
+		return FAST_FLOOR_DIV(a_Coord, (1 << a_Scale) * cChunkDef::Width * 8)
+			* (1 << a_Scale) * cChunkDef::Width * 8
+			+ (1 << a_Scale) * cChunkDef::Width * 4;
+	}
+
+	static constexpr eMapIcon BannerColourToIcon(unsigned int a_Colour)
 	{
 		return static_cast<eMapIcon>(E_MAP_ICON_WHITE_BANNER + 15 - a_Colour);
 	}
 
-	UInt32 DecoratorIdFromPosition(const Vector3d & a_Position) const
+	UInt32 DecoratorIdFromPosition(const Vector3i & a_Position) const
 	{
-		int X = MAP_WIDTH / 2 + (FloorC(a_Position.x) - m_CenterX) / GetPixelWidth();
-		int Z = MAP_HEIGHT / 2 + (FloorC(a_Position.z) - m_CenterZ) / GetPixelWidth();
-		return static_cast<UInt32>((FloorC(a_Position.y) * 65536) | (X * 256) | Z);
+		int X = MAP_WIDTH / 2 + (a_Position.x - m_CenterX) / GetPixelWidth();
+		int Z = MAP_HEIGHT / 2 + (a_Position.z - m_CenterZ) / GetPixelWidth();
+		return static_cast<UInt32>((a_Position.y * 65536) | (X * 256) | Z);
 	}
 
-	mutable cCriticalSection m_CS;
+	bool WaterAt(int a_X, int a_Z);
+
+	void Sketch(void);
+
+	void FillAndSketch(void);
 
 	bool InRange(int a_CenterX, int a_CenterZ, int a_TargetX, int a_TargetZ) const;
 
@@ -493,9 +507,11 @@ private:
 	/** Update the specified pixel. */
 	ColourID PixelColour(cChunk & a_Chunk, int a_RelX, int a_RelZ) const;
 
-	void AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3d & a_Position, double a_Yaw, const AString a_Name);
+	void AddDecorator(DecoratorType a_Type, UInt32 a_Id, eMapIcon a_Icon, const Vector3i & a_Position, double a_Yaw, const AString a_Name);
 
 	void RemoveDecorator(DecoratorType a_Type, UInt32 a_Id);
+
+	mutable cCriticalSection m_CS;
 
 	unsigned int m_ID;
 
@@ -507,6 +523,9 @@ private:
 
 	/** The radius of the area around players that is updated when the map is held. */
 	const int m_Radius;
+
+	/** Indicates the map is in the process of being sketched. */
+	int m_Busy;
 
 	/** Indicates that the map has changes that need to be saved. */
 	bool m_Dirty;
@@ -536,6 +555,9 @@ private:
 
 	friend class cMapManager;
 	friend class cMapSerializer;
+	friend class cMapUpdaterEngine;
+	friend class cMapUpdater;
+	friend class cMapSketchUpdater;
 
 };  // tolua_export
 

@@ -49,7 +49,7 @@ public:
 	}
 
 	/** Creates a new map. Returns false on error otherwise the new map ID is in a_Map_ID. */
-	bool CreateMap(unsigned int & a_MapID, short a_MapType, int a_CenterX, int a_CenterY, unsigned int a_Scale = 0);
+	bool CreateMap(unsigned int & a_MapID, cMap::eMapIcon a_MapType, int a_X, int a_Z, unsigned int a_Scale = 0);
 
 	/** Calls the callback for the map with the specified ID.
 	Returns true if the map was found and the callback called, false if map not found.

@@ -401,7 +401,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 	{
 		for (int Banner = a_NBT.GetFirstChild(Banners); Banner >= 0; Banner = a_NBT.GetNextSibling(Banner))
 		{
-			Vector3d Position;
+			Vector3i Position;
 			unsigned int Colour = 0;
 			AString Name = "";
 

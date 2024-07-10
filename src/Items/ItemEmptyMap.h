@@ -46,7 +46,7 @@ public:
 		}
 
 		unsigned int MapID;
-		if (a_World->GetMapManager().CreateMap(MapID, a_HeldItem.m_ItemDamage, FloorC(a_Player->GetPosX()), FloorC(a_Player->GetPosZ())))
+		if (a_World->GetMapManager().CreateMap(MapID, static_cast<cMap::eMapIcon>(a_HeldItem.m_ItemDamage), FloorC(a_Player->GetPosX()), FloorC(a_Player->GetPosZ())))
 		{
 			// At the moment we are restricted to 16 bit map IDs because it is stored as damage on the item.
 			if (MapID <= 65535)
