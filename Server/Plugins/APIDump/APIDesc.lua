@@ -8688,11 +8688,42 @@ a_Player:OpenWindow(Window);
 				<p>
 				The contents (i.e. pixel data) of a cMap are dynamically updated by each
 				tracked {{cPlayer}} instance. Furthermore, a cMap maintains and periodically
-				updates	a list of map decorators, which are objects drawn on the map that
+				updates a list of map decorators, which are objects drawn on the map that
 				can freely move (e.g. Player and item frame pointers).
 			]],
 			Functions =
 			{
+				AddMarker =
+				{
+					Params =
+					{
+						{
+							Name = "Id",
+							Type = "number",
+						},
+						{
+							Name = "Icon",
+							Type = "eMapIcon",
+						},
+						{
+							Name = "Position",
+							Type = "Vector3i",
+						},
+						{
+							Name = "Yaw",
+							Type = "number",
+						},
+						{
+							Name = "Name",
+							Type = "string",
+						},
+					},
+					Notes = [[
+						Adds a marker to the map.<br />
+						Id 0 is automatically used for the marker on explorer maps. All other
+						ids are available to plugins.
+					]],
+				},
 				GetCenterX =
 				{
 					Returns =
@@ -8891,6 +8922,17 @@ a_Player:OpenWindow(Window);
 					},
 					Notes = "Returns the associated world.",
 				},
+				RemoveMarker =
+				{
+					Params =
+					{
+						{
+							Name = "Id",
+							Type = "number",
+						},
+					},
+					Notes = "Removes a marker from the map.",
+				},
 				SetFarTrackingThreshold =
 				{
 					Params =
@@ -8999,63 +9041,21 @@ a_Player:OpenWindow(Window);
 					Notes = "Turns unlimited tracking on and off.",
 				},
 			},
-			Constants =
+			ConstantGroups =
 			{
-				E_BASE_COLOR_BLUE =
+				eMapColor =
 				{
-					Notes = "",
+					Include = { "E_MAP_COLOR_.*" },
+					TextBefore = "Colours available for use on maps.",
+					TextAfter = "",
+					ShowInDescendants = false,  -- If false, descendant classes won't list these constants
 				},
-				E_BASE_COLOR_BROWN =
+				eMapIcon =
 				{
-					Notes = "",
-				},
-				E_BASE_COLOR_DARK_BROWN =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_DARK_GRAY =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_DARK_GREEN =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_GRAY_1 =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_GRAY_2 =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_LIGHT_BROWN =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_LIGHT_GRAY =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_LIGHT_GREEN =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_PALE_BLUE =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_RED =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_TRANSPARENT =
-				{
-					Notes = "",
-				},
-				E_BASE_COLOR_WHITE =
-				{
-					Notes = "",
+					Include = { "E_MAP_ICON_.*" },
+					TextBefore = "Icons available for use as markers on maps.",
+					TextAfter = "",
+					ShowInDescendants = false,
 				},
 			},
 		},
@@ -9066,6 +9066,19 @@ a_Player:OpenWindow(Window);
 			]],
 			Functions =
 			{
+				CopyMap = {
+					Params =
+					{
+						{
+							Name = "OldMap",
+							Type = "cMap",
+						},
+					},
+					Returns =
+					{
+					},
+					Notes = "Creates a copy of the given map.",
+				},
 				DoWithMap =
 				{
 					Params =
