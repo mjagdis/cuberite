@@ -162,7 +162,7 @@ void cMapSerializer::SaveMapToNBT(cFastNBTWriter & a_Writer)
 		{
 			a_Writer.BeginCompound("");
 
-			a_Writer.AddInt("EntityId", itr.first.m_Id);
+			a_Writer.AddInt("EntityId", static_cast<Int32>(itr.first.m_Id));
 			a_Writer.AddInt("Rotation", itr.second.m_Yaw);
 
 			a_Writer.BeginCompound("Pos");
@@ -306,7 +306,8 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 			cMap::DecoratorType Type = cMap::DecoratorType::FRAME;
 			cMap::eMapIcon Icon = cMap::eMapIcon::E_MAP_ICON_GREEN_ARROW;
 			Vector3d Position;
-			int EntityId = 0, Yaw = 0;
+			UInt32 EntityId = 0;
+			int Yaw = 0;
 
 			// The decoration structure changed somewhat arbitrarily (IMHO) in 1.20.
 			// Cuberite currently saves using the pre-1.20 style.
@@ -314,7 +315,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 			if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
 			{
 				// Pre-1.20
-				EntityId = a_NBT.GetInt(CurrLine);
+				EntityId = static_cast<UInt32>(a_NBT.GetInt(CurrLine));
 
 				CurrLine = a_NBT.FindChildByName(Frame, "Rotation");
 				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
@@ -350,7 +351,7 @@ bool cMapSerializer::LoadMapFromNBT(const cParsedNBT & a_NBT)
 				if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
 				{
 					// Post-1.20
-					EntityId = a_NBT.GetInt(CurrLine);
+					EntityId = static_cast<UInt32>(a_NBT.GetInt(CurrLine));
 
 					CurrLine = a_NBT.FindChildByName(Frame, "rotation");
 					if ((CurrLine >= 0) && (a_NBT.GetType(CurrLine) == TAG_Int))
@@ -563,11 +564,11 @@ bool cIDCountSerializer::Load()
 		switch (NBT.GetType(CurrLine))
 		{
 			case TAG_Int:
-				m_MapCount = NBT.GetInt(CurrLine) + 1;
+				m_MapCount = static_cast<UInt32>(NBT.GetInt(CurrLine)) + 1;
 				break;
 
 			case TAG_Short:
-				m_MapCount = NBT.GetShort(CurrLine) + 1;
+				m_MapCount = static_cast<UInt32>(NBT.GetShort(CurrLine)) + 1;
 				break;
 
 			default:

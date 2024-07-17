@@ -194,7 +194,7 @@ void cProtocol_1_14::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a
 	{
 		for (const auto & itr : a_Map.GetDecorators())
 		{
-			Pkt.WriteVarInt32(itr.second.m_Icon);
+			Pkt.WriteVarInt32(static_cast<UInt32>(itr.second.m_Icon));
 			Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapX));
 			Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
 			Pkt.WriteBEUInt8(itr.second.m_CurrentRot);

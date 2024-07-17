@@ -33,7 +33,7 @@ public:
 	{
 	}
 
-	virtual ~cMapUpdaterEngine(void)
+	virtual ~cMapUpdaterEngine(void) override
 	{
 		delete this;
 	}
@@ -230,7 +230,7 @@ public:
 		m_Radius(a_Radius)
 	{}
 
-	virtual ~cMapUpdater(void) {}
+	virtual ~cMapUpdater(void) override {}
 
 
 	using cMapUpdaterEngine::Start;
@@ -287,7 +287,7 @@ public:
 	{
 	}
 
-	virtual ~cMapSketchUpdater(void) {}
+	virtual ~cMapSketchUpdater(void) override {}
 
 
 	virtual void Start(cChunkCoords & a_StartChunk, cChunkCoords & a_EndChunk) override
@@ -576,7 +576,7 @@ void cMap::Sketch(void)
 
 			if ((ColourID / 4) == cMap::eMapColor::E_MAP_COLOR_WATER)
 			{
-				auto Brightness = (ColourID & 3);
+				unsigned int Brightness = (ColourID & 3);
 
 				if (Brightness != 3)
 				{
@@ -590,7 +590,7 @@ void cMap::Sketch(void)
 					if ((Z & 1))
 					{
 						static const std::array<unsigned char, 5> Stripe = { { 0, 1, 2, 1, 0 } };
-						ColourID = SKETCH_WATER_COLOUR | Stripe[((StripeOffset + X) >> 3) % 5];
+						ColourID = SKETCH_WATER_COLOUR | Stripe[(static_cast<unsigned int>(StripeOffset + X) >> 3) % 5];
 					}
 					else
 					{
@@ -750,7 +750,7 @@ void cMap::SetUnlimitedTracking(bool a_OnOff)
 
 
 
-void cMap::SetTrackingThreshold(unsigned int a_Threshold)
+void cMap::SetTrackingThreshold(int a_Threshold)
 {
 	m_Dirty |= (m_TrackingThreshold != a_Threshold);
 	m_TrackingThreshold = a_Threshold;
@@ -760,7 +760,7 @@ void cMap::SetTrackingThreshold(unsigned int a_Threshold)
 
 
 
-void cMap::SetFarTrackingThreshold(unsigned int a_Threshold)
+void cMap::SetFarTrackingThreshold(int a_Threshold)
 {
 	m_Dirty |= (m_FarTrackingThreshold != a_Threshold);
 	m_FarTrackingThreshold = a_Threshold;
@@ -881,7 +881,7 @@ void cMap::RemoveFrame(const Vector3i & a_Position, double a_Yaw)
 {
 	for (auto itr = m_Decorators.begin(); itr != m_Decorators.end(); ++itr)
 	{
-		if ((itr->first.m_Type == DecoratorType::FRAME) && (itr->second.m_Position == a_Position) && (itr->second.m_Yaw == a_Yaw))
+		if ((itr->first.m_Type == DecoratorType::FRAME) && (itr->second.m_Position == a_Position) && (std::abs(itr->second.m_Yaw - a_Yaw) < 0.001))
 		{
 			// There should be only one.
 			m_Decorators.erase(itr);

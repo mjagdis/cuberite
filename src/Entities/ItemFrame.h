@@ -21,7 +21,7 @@ public:  // tolua_export
 
 	cItemFrame(eBlockFace a_BlockFace, Vector3d a_Pos);
 
-	virtual Byte GetProtocolFacing() const override { return m_Facing; }
+	virtual Byte GetProtocolFacing() const override { return static_cast<Byte>(m_Facing); }
 
 	// tolua_begin
 

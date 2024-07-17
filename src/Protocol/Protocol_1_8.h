@@ -165,7 +165,7 @@ protected:
 
 	/** Converts entity data to protocol-specific entity data.
 	Only entities that the Send Spawn Entity packet supports are valid inputs to this method */
-	virtual UInt8 GetProtocolEntityData(const cEntity & a_Entity) const;
+	virtual Int32 GetProtocolEntityData(const cEntity & a_Entity) const;
 
 	/** Converts a map icon to a protocol-specific icon. */
 	virtual std::pair<cMap::eMapIcon, UInt8> GetProtocolMapIcon(cMap::eMapIcon a_Icon, UInt8 a_Rot) const;
@@ -180,7 +180,7 @@ protected:
 	virtual Version GetProtocolVersion() const override;
 
 	/** Converts a map colour into something allowable by this protocol version. */
-	virtual Byte MapColour(Byte a_Colour) const { return MapPalette_1_8::MapColour(a_Colour); }
+	virtual Byte MapColour(Byte a_Colour) const override { return MapPalette_1_8::MapColour(a_Colour); }
 
 	/** Reads and handles the packet. The packet length and type have already been read.
 	Returns true if the packet was understood, false if it was an unknown packet. */

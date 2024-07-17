@@ -371,9 +371,9 @@ public:
 
 	void SetUnlimitedTracking(bool a_OnOff);
 
-	void SetTrackingThreshold(unsigned int a_Threshold);
+	void SetTrackingThreshold(int a_Threshold);
 
-	void SetFarTrackingThreshold(unsigned int a_Threshold);
+	void SetFarTrackingThreshold(int a_Threshold);
 
 	bool SetPixel(int a_X, int a_Z, ColorID a_Data);
 
@@ -408,13 +408,13 @@ public:
 
 	bool GetUnlimitedTracking(void) const { return m_UnlimitedTracking; }
 
-	unsigned int GetTrackingThreshold(void) const { return m_TrackingThreshold; }
+	int GetTrackingThreshold(void) const { return m_TrackingThreshold; }
 
-	unsigned int GetFarTrackingThreshold(void) const { return m_FarTrackingThreshold; }
+	int GetFarTrackingThreshold(void) const { return m_FarTrackingThreshold; }
 
-	unsigned int GetTrackingDistance(const Vector3i & a_Position) const
+	int GetTrackingDistance(const Vector3i & a_Position) const
 	{
-		return std::max(abs(a_Position.x - m_CenterX), abs(a_Position.z - m_CenterZ));
+		return std::max(std::abs(a_Position.x - m_CenterX), std::abs(a_Position.z - m_CenterZ));
 	}
 
 	void AddMarker(UInt32 a_Id, eMapIcon a_Icon, const Vector3i & a_Position, double a_Yaw, const AString & a_Name)
@@ -518,8 +518,8 @@ private:
 	bool m_Locked;
 	bool m_TrackingPosition;
 	bool m_UnlimitedTracking;
-	unsigned int m_TrackingThreshold;
-	unsigned int m_FarTrackingThreshold;
+	int m_TrackingThreshold;
+	int m_FarTrackingThreshold;
 
 	cWorld * m_World;
 

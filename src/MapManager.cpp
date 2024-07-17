@@ -113,15 +113,19 @@ bool cMapManager::CreateMap(unsigned int & a_MapID, cMap::eMapIcon a_MapType, in
 
 std::shared_ptr<cMap> cMapManager::CopyMap(cMap & a_OldMap)
 {
-	cCSLock Lock(m_CS);
-
-	unsigned int ID = NextID();
+	unsigned int ID;
+	{
+		cCSLock Lock(m_CS);
+		ID = NextID();
+	}
 
 	std::shared_ptr<cMap> Map;
 	{
 		cCSLock Lock(a_OldMap.m_CS);
 		Map = std::make_shared<cMap>(ID, a_OldMap);
 	}
+
+	cCSLock Lock(m_CS);
 
 	auto [it, inserted] = m_MapData.try_emplace(ID, Map);
 	UNUSED(it);
@@ -153,15 +157,20 @@ void cMapManager::LoadMapData(void)
 			continue;
 		}
 
-		unsigned int MapID;
+		unsigned int MapID = 0;
+#if 0
+		// Yes, I know this would be better but it requires gcc >= 12
+		std::from_chars(&File[4], &File[File.size() - 8], MapID);
+#else
 		try
-		{
-			MapID = std::stoul(File.substr(4, File.size() - 8));
-		}
+			{
+				MapID = static_cast<unsigned int>(std::stoul(File.substr(4, File.size() - 8)));
+			}
 		catch (...)
-		{
-			continue;
-		}
+			{
+				continue;
+			}
+#endif
 
 		auto Map = std::make_shared<cMap>(MapID, m_World);
 		auto [it, inserted] = m_MapData.try_emplace(MapID, Map);

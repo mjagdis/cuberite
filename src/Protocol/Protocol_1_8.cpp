@@ -4007,7 +4007,7 @@ UInt8 cProtocol_1_8_0::GetProtocolEntityType(const cEntity & a_Entity) const
 
 
 
-UInt8 cProtocol_1_8_0::GetProtocolEntityData(const cEntity & a_Entity) const
+Int32 cProtocol_1_8_0::GetProtocolEntityData(const cEntity & a_Entity) const
 {
 	Int32 EntityData = a_Entity.GetEntityData();
 

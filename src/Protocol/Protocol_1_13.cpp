@@ -92,7 +92,7 @@ void cProtocol_1_13::SendMapData(const cMap & a_Map, UInt8 a_DataStartX, UInt8 a
 	{
 		for (const auto & itr : a_Map.GetDecorators())
 		{
-			Pkt.WriteVarInt32(itr.second.m_Icon);
+			Pkt.WriteVarInt32(static_cast<UInt32>(itr.second.m_Icon));
 			Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapX));
 			Pkt.WriteBEUInt8(static_cast<UInt8>(itr.second.m_MapZ));
 			Pkt.WriteBEUInt8(itr.second.m_CurrentRot);
@@ -524,7 +524,7 @@ signed char cProtocol_1_13::GetProtocolEntityStatus(const EntityAnimation a_Anim
 
 
 
-UInt8 cProtocol_1_13::GetProtocolEntityData(const cEntity & a_Entity) const
+Int32 cProtocol_1_13::GetProtocolEntityData(const cEntity & a_Entity) const
 {
 	return a_Entity.GetEntityData();
 }
