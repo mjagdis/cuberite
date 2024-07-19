@@ -35,7 +35,24 @@ different threads' - the caller, the Loader or the Generator thread.
 class cChunkStay
 {
 public:
-	cChunkStay(void);
+	typedef std::set<cChunkCoords> cChunkCoordsList;
+
+	cChunkStay() :
+		m_ChunkMap(nullptr)
+	{
+	}
+
+	cChunkStay(cChunkCoordsList & a_ChunkCoordsList) :
+		m_ChunkMap(nullptr),
+		m_Chunks(a_ChunkCoordsList)
+	{
+	}
+
+	cChunkStay(cChunkCoordsList && a_ChunkCoordsList) :
+		m_ChunkMap(nullptr),
+		m_Chunks(std::move(a_ChunkCoordsList))
+	{
+	}
 
 	/** Deletes the object. Note that this calls Clear(), which means that the ChunkStay needs to be disabled. */
 	virtual ~cChunkStay();
@@ -46,11 +63,23 @@ public:
 
 	/** Adds a chunk to be locked from unloading.
 	To be used only while the ChunkStay object is not enabled. */
-	void Add(int a_ChunkX, int a_ChunkZ);
+	void Add(int a_ChunkX, int a_ChunkZ)
+	{
+		ASSERT(m_ChunkMap == nullptr);
+		m_Chunks.emplace(a_ChunkX, a_ChunkZ);
+	}
+
+	void AddEnabled(int a_ChunkX, int a_ChunkZ);
 
 	/** Releases the chunk so that it's no longer locked from unloading.
 	To be used only while the ChunkStay object is not enabled. */
-	void Remove(int a_ChunkX, int a_ChunkZ);
+	void Remove(int a_ChunkX, int a_ChunkZ)
+	{
+		ASSERT(m_ChunkMap == nullptr);
+		m_Chunks.erase({ a_ChunkX, a_ChunkZ });
+	}
+
+	void RemoveEnabled(int a_ChunkX, int a_ChunkZ);
 
 	/** Enables the ChunkStay on the specified chunkmap, causing it to load and generate chunks.
 	All the contained chunks are queued for loading / generating. */
@@ -58,9 +87,6 @@ public:
 
 	/** Disables the ChunkStay, the chunks are released and the ChunkStay object can be edited with Add() and Remove() again */
 	virtual void Disable(void);
-
-	/** Returns all the chunks that should be kept */
-	const cChunkCoordsVector & GetChunks(void) const { return m_Chunks; }
 
 	/** Called when a specific chunk become available. */
 	virtual void OnChunkAvailable(int a_ChunkX, int a_ChunkZ) = 0;
@@ -82,10 +108,10 @@ protected:
 	cChunkMap * m_ChunkMap;
 
 	/** The list of chunks to lock from unloading. */
-	cChunkCoordsVector m_Chunks;
+	cChunkCoordsList m_Chunks;
 
 	/** The chunks that still need loading */
-	cChunkCoordsVector m_OutstandingChunks;
+	cChunkCoordsList m_OutstandingChunks;
 
 
 	/** Called by cChunkMap when a chunk is available, checks m_NumLoaded and triggers the appropriate callbacks.

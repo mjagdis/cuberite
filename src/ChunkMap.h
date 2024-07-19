@@ -289,7 +289,7 @@ private:
 	// Chunks query their neighbors using FindChunk(), while being ticked
 	friend class cChunk;
 
-	// The chunkstay can (de-)register itself using AddChunkStay() and DelChunkStay()
+	// ChunkStays work closely with the ChunkMap to provide operations on sets of Chunks
 	friend class cChunkStay;
 
 	typedef std::list<cChunkStay *> cChunkStays;
@@ -319,13 +319,4 @@ private:
 
 	/** Locates a chunk ptr in the chunkmap; doesn't create it when not found; assumes m_CSChunks is locked. To be called only from cChunkMap. */
 	const cChunk * FindChunk(int a_ChunkX, int a_ChunkZ) const;
-
-	/** Adds a new cChunkStay descendant to the internal list of ChunkStays; loads its chunks.
-	To be used only by cChunkStay; others should use cChunkStay::Enable() instead */
-	void AddChunkStay(cChunkStay & a_ChunkStay);
-
-	/** Removes the specified cChunkStay descendant from the internal list of ChunkStays.
-	To be used only by cChunkStay; others should use cChunkStay::Disable() instead */
-	void DelChunkStay(cChunkStay & a_ChunkStay);
-
 };

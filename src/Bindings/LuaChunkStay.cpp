@@ -76,19 +76,7 @@ void cLuaChunkStay::AddChunkCoord(cLuaState & L, int a_Index)
 	int ChunkZ = luaL_checkint(L, -1);
 	lua_pop(L, 2);
 
-	// Check that a coord is not yet present:
-	for (cChunkCoordsVector::iterator itr = m_Chunks.begin(), end = m_Chunks.end(); itr != end; ++itr)
-	{
-		if ((itr->m_ChunkX == ChunkX) && (itr->m_ChunkZ == ChunkZ))
-		{
-			LOGWARNING("%s: Element #%d is a duplicate, ignoring it.",
-				__FUNCTION__, a_Index
-			);
-			return;
-		}
-	}  // for itr - m_Chunks[]
-
-	m_Chunks.emplace_back(ChunkX, ChunkZ);
+	Super::Add(ChunkX, ChunkZ);
 }
 
 
