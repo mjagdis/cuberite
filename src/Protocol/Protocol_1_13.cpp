@@ -11,8 +11,6 @@ Implements the 1.13 protocol classes:
 #include "Globals.h"
 #include "Protocol_1_13.h"
 
-#include "../JsonUtils.h"
-
 #include "../Entities/Boat.h"
 #include "../Entities/EnderCrystal.h"
 #include "../Entities/Minecart.h"
@@ -784,7 +782,18 @@ void cProtocol_1_13::ParseItemMetadata(cItem & a_Item, const ContiguousByteBuffe
 					{
 						if ((NBT.GetType(displaytag) == TAG_String) && (NBT.GetName(displaytag) == "Name"))  // Custon name tag
 						{
-							a_Item.m_CustomName = NBT.GetString(displaytag);
+							const auto data = NBT.GetString(displaytag);
+
+							Json::Value root;
+							if (JsonUtils::ParseString(data, root) && root.isObject())
+							{
+								const auto & text = root["text"];
+								a_Item.m_CustomName = (text.isString() ? text.asString() : data);
+							}
+							else
+							{
+								a_Item.m_CustomName = data;
+							}
 						}
 						else if ((NBT.GetType(displaytag) == TAG_List) && (NBT.GetName(displaytag) == "Lore"))  // Lore tag
 						{
@@ -910,7 +919,7 @@ void cProtocol_1_13::WriteEntityMetadata(cPacketizer & a_Pkt, const cEntity & a_
 			// Then it's possible to move the custom name of mobs to the entities
 			// and to remove the "special" player custom name.
 			WriteEntityMetadata(a_Pkt, EntityMetadata::EntityCustomName, EntityMetadataType::String);
-			a_Pkt.WriteString(Player.GetName());
+			a_Pkt.WriteString(JsonUtils::SerializeSingleValueJsonObject("text", Player.GetName()));
 
 			WriteEntityMetadata(a_Pkt, EntityMetadata::LivingHealth, EntityMetadataType::Float);
 			a_Pkt.WriteBEFloat(static_cast<float>(Player.GetHealth()));
@@ -1127,7 +1136,7 @@ void cProtocol_1_13::WriteItemNBT(cPacketizer & a_Pkt, const cItem & a_Item) con
 
 		if (!a_Item.m_CustomName.empty())
 		{
-			NBT.AddString("Name", a_Item.m_CustomName);
+			NBT.AddString("Name", JsonUtils::SerializeSingleValueJsonObject("text", a_Item.m_CustomName));
 		}
 	}
 	NBT.EndCompound();
@@ -1176,7 +1185,7 @@ void cProtocol_1_13::WriteMobMetadata(cPacketizer & a_Pkt, const cMonster & a_Mo
 		// TODO: As of 1.9 _all_ entities can have custom names; should this be moved up?
 		WriteEntityMetadata(a_Pkt, EntityMetadata::EntityCustomName, EntityMetadataType::OptChat);
 		a_Pkt.WriteBool(true);
-		a_Pkt.WriteString(a_Mob.GetCustomName());
+		a_Pkt.WriteString(JsonUtils::SerializeSingleValueJsonObject("text", a_Mob.GetCustomName()));
 
 		WriteEntityMetadata(a_Pkt, EntityMetadata::EntityCustomNameVisible, EntityMetadataType::Boolean);
 		a_Pkt.WriteBool(a_Mob.IsCustomNameAlwaysVisible());
