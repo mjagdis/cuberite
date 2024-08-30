@@ -1067,7 +1067,7 @@ void cProtocol_1_13::WriteItemNBT(cPacketizer & a_Pkt, const cItem & a_Item) con
 
 		if (!a_Item.m_CustomName.empty())
 		{
-			NBT.AddString("Name", a_Item.m_CustomName);
+			NBT.AddString("Name", "{\"text\":\"" + a_Item.m_CustomName + "\"}");
 		}
 	}
 	NBT.EndCompound();
