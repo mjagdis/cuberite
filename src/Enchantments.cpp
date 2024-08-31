@@ -342,6 +342,8 @@ int cEnchantments::StringToEnchantmentID(const AString & a_EnchantmentName)
 		{ enchAquaAffinity,         "AquaAffinity" },
 		{ enchThorns,               "Thorns" },
 		{ enchDepthStrider,         "DepthStrider" },
+		{ enchFrostWalker,          "FrostWalker" },
+		{ enchCurseOfBinding,       "CurseOfBinding" },
 		{ enchSharpness,            "Sharpness" },
 		{ enchSmite,                "Smite" },
 		{ enchBaneOfArthropods,     "BaneOfArthropods" },
@@ -358,6 +360,13 @@ int cEnchantments::StringToEnchantmentID(const AString & a_EnchantmentName)
 		{ enchInfinity,             "Infinity" },
 		{ enchLuckOfTheSea,         "LuckOfTheSea" },
 		{ enchLure,                 "Lure" },
+		{ enchLoyalty,              "Loyalty" },
+		{ enchImpaling,             "Impaling" },
+		{ enchRiptide,              "Riptide" },
+		{ enchChanneling,           "Channeling" },
+		{ enchMending,              "Mending" },
+		{ enchCurseOfVanishing,     "CurseOfVanishing" },
+		{ enchSweepingEdge,         "Sweeping" },
 	} ;
 
 	// First try to parse as a number:

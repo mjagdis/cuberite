@@ -56,6 +56,8 @@ public:
 		enchAquaAffinity         = 6,
 		enchThorns               = 7,
 		enchDepthStrider         = 8,
+		enchFrostWalker          = 9,
+		enchCurseOfBinding       = 10,
 		enchSharpness            = 16,
 		enchSmite                = 17,
 		enchBaneOfArthropods     = 18,
@@ -72,6 +74,14 @@ public:
 		enchInfinity             = 51,
 		enchLuckOfTheSea         = 61,
 		enchLure                 = 62,
+		enchLoyalty              = 65,
+		enchImpaling             = 66,
+		enchRiptide              = 67,
+		enchChanneling           = 68,
+		enchMending              = 70,
+		enchCurseOfVanishing     = 71,
+
+		enchSweepingEdge,
 	} ;
 
 	/** Creates an empty enchantments container */
