@@ -56,6 +56,8 @@ public:
 		enchAquaAffinity         = 6,
 		enchThorns               = 7,
 		enchDepthStrider         = 8,
+		enchFrostWalker          = 9,
+		enchCurseOfBinding       = 10,
 		enchSharpness            = 16,
 		enchSmite                = 17,
 		enchBaneOfArthropods     = 18,
@@ -72,7 +74,19 @@ public:
 		enchInfinity             = 51,
 		enchLuckOfTheSea         = 61,
 		enchLure                 = 62,
+		enchLoyalty              = 65,
+		enchImpaling             = 66,
+		enchRiptide              = 67,
+		enchChanneling           = 68,
+		enchMending              = 70,
+		enchCurseOfVanishing     = 71,
+
+		enchSweepingEdge,
 	} ;
+
+	static const AString & MapEnchantmentId(eEnchantment ent);
+
+	static int UnmapEnchantmentId(const AString & a_Enchantment );
 
 	/** Creates an empty enchantments container */
 	cEnchantments(void);
@@ -153,6 +167,8 @@ public:
 
 	/** Writes the enchantments into the specified NBT writer; begins with the LIST tag of the specified name ("ench" or "StoredEnchantments") */
 	friend void EnchantmentSerializer::WriteToNBTCompound(const cEnchantments & a_Enchantments, cFastNBTWriter & a_Writer, const AString & a_ListTagName);
+
+	friend void EnchantmentSerializer::WriteToNBTCompoundStrings(const cEnchantments & a_Enchantments, cFastNBTWriter & a_Writer, const AString & a_ListTagName);
 
 	/** Reads the enchantments from the specified NBT list tag (ench or StoredEnchantments) */
 	friend void EnchantmentSerializer::ParseFromNBT(cEnchantments & a_Enchantments, const cParsedNBT & a_NBT, int a_EnchListTagIdx);

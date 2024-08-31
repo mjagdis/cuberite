@@ -25,6 +25,26 @@ void EnchantmentSerializer::WriteToNBTCompound(const cEnchantments & a_Enchantme
 
 
 
+void EnchantmentSerializer::WriteToNBTCompoundStrings(const cEnchantments & a_Enchantments, cFastNBTWriter & a_Writer, const AString & a_ListTagName)
+{
+	// Write the enchantments into the specified NBT writer
+	// begin with the LIST tag of the specified name ("ench" or "StoredEnchantments")
+
+	a_Writer.BeginList(a_ListTagName, TAG_Compound);
+	for (cEnchantments::cMap::const_iterator itr = a_Enchantments.m_Enchantments.begin(), end = a_Enchantments.m_Enchantments.end(); itr != end; ++itr)
+	{
+		a_Writer.BeginCompound("");
+			a_Writer.AddString("id", cEnchantments::MapEnchantmentId(static_cast<cEnchantments::eEnchantment>(itr->first)));
+			a_Writer.AddShort("lvl", static_cast<Int16>(itr->second));
+		a_Writer.EndCompound();
+	}  // for itr - m_Enchantments[]
+	a_Writer.EndList();
+}
+
+
+
+
+
 void EnchantmentSerializer::ParseFromNBT(cEnchantments & a_Enchantments, const cParsedNBT & a_NBT, int a_EnchListTagIdx)
 {
 	// Read the enchantments from the specified NBT list tag (ench or StoredEnchantments)
@@ -61,15 +81,19 @@ void EnchantmentSerializer::ParseFromNBT(cEnchantments & a_Enchantments, const c
 		int id = -1, lvl = -1;
 		for (int ch = a_NBT.GetFirstChild(tag); ch >= 0; ch = a_NBT.GetNextSibling(ch))
 		{
-			if (a_NBT.GetType(ch) != TAG_Short)
-			{
-				continue;
-			}
+			eTagType type = a_NBT.GetType(ch);
 			if (a_NBT.GetName(ch) == "id")
 			{
-				id = a_NBT.GetShort(ch);
+				if (type == eTagType::TAG_Short)
+				{
+					id = a_NBT.GetShort(ch);
+				}
+				else if(eTagType::TAG_String == type)
+				{
+					id = cEnchantments::UnmapEnchantmentId(a_NBT.GetString(ch));
+				}
 			}
-			else if (a_NBT.GetName(ch) == "lvl")
+			else if (a_NBT.GetName(ch) == "lvl" && eTagType::TAG_Short == type)
 			{
 				lvl = a_NBT.GetShort(ch);
 			}
