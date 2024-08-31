@@ -86,6 +86,8 @@ public:
 
 	static const AString & MapEnchantmentId(eEnchantment ent);
 
+	static int UnmapEnchantmentId(const AString & a_Enchantment );
+
 	/** Creates an empty enchantments container */
 	cEnchantments(void);
 

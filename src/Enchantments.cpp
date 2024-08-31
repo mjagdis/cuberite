@@ -67,6 +67,23 @@ const AString & cEnchantments::MapEnchantmentId(eEnchantment ent)
 
 
 
+int cEnchantments::UnmapEnchantmentId(const AString & a_Enchantment)
+{
+	for (auto it : EnchantmentIdStrings)
+	{
+		if (it.second == a_Enchantment)
+		{
+			return it.first;
+		}
+	}
+	LOGD("Can not parse enchantment name: %s", a_Enchantment);
+	return -1;
+}
+
+
+
+
+
 cEnchantments::cEnchantments(void)
 {
 	// Nothing needed yet, but the constructor needs to be declared and impemented in order to be usable

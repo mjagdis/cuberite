@@ -714,7 +714,7 @@ void cProtocol_1_13::ParseItemMetadata(cItem & a_Item, const ContiguousByteBuffe
 		{
 			case TAG_List:
 			{
-				if ((TagName == "ench") || (TagName == "StoredEnchantments"))  // Enchantments tags
+				if ((TagName == "Enchantments") || (TagName == "StoredEnchantments"))  // Enchantments tags
 				{
 					EnchantmentSerializer::ParseFromNBT(a_Item.m_Enchantments, NBT, tag);
 				}

@@ -81,15 +81,19 @@ void EnchantmentSerializer::ParseFromNBT(cEnchantments & a_Enchantments, const c
 		int id = -1, lvl = -1;
 		for (int ch = a_NBT.GetFirstChild(tag); ch >= 0; ch = a_NBT.GetNextSibling(ch))
 		{
-			if (a_NBT.GetType(ch) != TAG_Short)
-			{
-				continue;
-			}
+			eTagType type = a_NBT.GetType(ch);
 			if (a_NBT.GetName(ch) == "id")
 			{
-				id = a_NBT.GetShort(ch);
+				if (type == eTagType::TAG_Short)
+				{
+					id = a_NBT.GetShort(ch);
+				}
+				else if(eTagType::TAG_String == type)
+				{
+					id = cEnchantments::UnmapEnchantmentId(a_NBT.GetString(ch));
+				}
 			}
-			else if (a_NBT.GetName(ch) == "lvl")
+			else if (a_NBT.GetName(ch) == "lvl" && eTagType::TAG_Short == type)
 			{
 				lvl = a_NBT.GetShort(ch);
 			}
