@@ -1074,7 +1074,7 @@ void cProtocol_1_13::WriteItemNBT(cPacketizer & a_Pkt, const cItem & a_Item) con
 
 	if (!a_Item.m_Enchantments.IsEmpty())
 	{
-		EnchantmentSerializer::WriteToNBTCompound(a_Item.m_Enchantments, NBT, "ench");
+		EnchantmentSerializer::WriteToNBTCompoundStrings(a_Item.m_Enchantments, NBT, "Enchantments");
 	}
 
 	if ((a_Item.m_ItemType == E_ITEM_FIREWORK_ROCKET) || (a_Item.m_ItemType == E_ITEM_FIREWORK_STAR))

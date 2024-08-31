@@ -84,6 +84,8 @@ public:
 		enchSweepingEdge,
 	} ;
 
+	static const AString & MapEnchantmentId(eEnchantment ent);
+
 	/** Creates an empty enchantments container */
 	cEnchantments(void);
 
@@ -163,6 +165,8 @@ public:
 
 	/** Writes the enchantments into the specified NBT writer; begins with the LIST tag of the specified name ("ench" or "StoredEnchantments") */
 	friend void EnchantmentSerializer::WriteToNBTCompound(const cEnchantments & a_Enchantments, cFastNBTWriter & a_Writer, const AString & a_ListTagName);
+
+	friend void EnchantmentSerializer::WriteToNBTCompoundStrings(const cEnchantments & a_Enchantments, cFastNBTWriter & a_Writer, const AString & a_ListTagName);
 
 	/** Reads the enchantments from the specified NBT list tag (ench or StoredEnchantments) */
 	friend void EnchantmentSerializer::ParseFromNBT(cEnchantments & a_Enchantments, const cParsedNBT & a_NBT, int a_EnchListTagIdx);

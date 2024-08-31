@@ -13,6 +13,60 @@
 
 
 
+static const std::map<cEnchantments::eEnchantment, AString> EnchantmentIdStrings
+{
+	{ cEnchantments::eEnchantment::enchProtection, "minecraft:protection" },
+	{ cEnchantments::eEnchantment::enchFireProtection, "minecraft:fire_protection" },
+	{ cEnchantments::eEnchantment::enchFeatherFalling, "minecraft:feather_falling" },
+	{ cEnchantments::eEnchantment::enchBlastProtection, "minecraft:blast_protection" },
+	{ cEnchantments::eEnchantment::enchProjectileProtection, "minecraft:projectile_protection" },
+	{ cEnchantments::eEnchantment::enchRespiration, "minecraft:respiration" },
+	{ cEnchantments::eEnchantment::enchAquaAffinity, "minecraft:aqua_affinity" },
+	{ cEnchantments::eEnchantment::enchThorns, "minecraft:thorns" },
+	{ cEnchantments::eEnchantment::enchDepthStrider, "minecraft:depth_strider" },
+	{ cEnchantments::eEnchantment::enchFrostWalker, "minecraft:frost_walker" },
+	{ cEnchantments::eEnchantment::enchCurseOfBinding, "minecraft:binding_curse" },
+	{ cEnchantments::eEnchantment::enchSharpness, "minecraft:sharpness" },
+	{ cEnchantments::eEnchantment::enchSmite, "minecraft:smite" },
+	{ cEnchantments::eEnchantment::enchBaneOfArthropods, "minecraft:bane_of_arthropods" },
+	{ cEnchantments::eEnchantment::enchKnockback, "minecraft:knockback" },
+	{ cEnchantments::eEnchantment::enchFireAspect, "minecraft:fire_aspect" },
+	{ cEnchantments::eEnchantment::enchLooting, "minecraft:looting" },
+	{ cEnchantments::eEnchantment::enchEfficiency, "minecraft:efficiency" },
+	{ cEnchantments::eEnchantment::enchSilkTouch, "minecraft:silk_touch" },
+	{ cEnchantments::eEnchantment::enchUnbreaking, "minecraft:unbreaking" },
+	{ cEnchantments::eEnchantment::enchFortune, "minecraft:fortune" },
+	{ cEnchantments::eEnchantment::enchPower, "minecraft:power" },
+	{ cEnchantments::eEnchantment::enchPunch, "minecraft:punch" },
+	{ cEnchantments::eEnchantment::enchFlame, "minecraft:flame" },
+	{ cEnchantments::eEnchantment::enchInfinity, "minecraft:infinity" },
+	{ cEnchantments::eEnchantment::enchLuckOfTheSea, "minecraft:luck_of_the_sea" },
+	{ cEnchantments::eEnchantment::enchLure, "minecraft:lure" },
+	{ cEnchantments::eEnchantment::enchLoyalty, "minecraft:loyalty" },
+	{ cEnchantments::eEnchantment::enchImpaling, "minecraft:impaling" },
+	{ cEnchantments::eEnchantment::enchRiptide, "minecraft:riptide" },
+	{ cEnchantments::eEnchantment::enchChanneling, "minecraft:channeling" },
+	{ cEnchantments::eEnchantment::enchMending, "minecraft:mending" },
+	{ cEnchantments::eEnchantment::enchCurseOfVanishing, "minecraft:vanishing_curse" },
+	{ cEnchantments::eEnchantment::enchSweepingEdge, "minecraft:sweeping" },
+};
+
+
+
+const AString & cEnchantments::MapEnchantmentId(eEnchantment ent)
+{
+	auto it = EnchantmentIdStrings.find(ent);
+	if(it == EnchantmentIdStrings.end()) {
+		static const AString Empty;
+		return Empty;
+	}
+	return it->second;
+}
+
+
+
+
+
 cEnchantments::cEnchantments(void)
 {
 	// Nothing needed yet, but the constructor needs to be declared and impemented in order to be usable
