@@ -1,3 +1,37 @@
+cmake_minimum_required(VERSION 3.13)
+
+set(TRACY_ENABLE FALSE CACHE BOOL
+	"Fetch and build with the Tracy profiler client")
+set(TRACY_GIT_TAG "master" CACHE STRING
+	"Git tag to fetch for the Tracy client. Match with your Tracy GUI version")
+
+set(TRACY_ON_DEMAND TRUE CACHE BOOL
+	"Enable profiling only when there is an established connection")
+set(TRACY_NO_BROADCAST FALSE CACHE BOOL
+	"Do not announce the app to the network")
+set(TRACY_ONLY_LOCALHOST FALSE CACHE BOOL
+	"Only allow connections from localhost")
+set(TRACY_ONLY_IPV4 FALSE CACHE BOOL
+	"Only listen for IPv4 connections")
+set(TRACY_CLIENT_ADDRESS "" CACHE STRING
+	"Address to use to listen for Tracy connections")
+set(TRACY_DATA_PORT "" CACHE STRING
+	"Port to listen on for connections")
+
+if(TRACY_ENABLE)
+	include(FetchContent)
+
+	message(STATUS "Fetching Tracy (${TRACY_GIT_TAG})")
+	FetchContent_Declare(
+		tracy
+		GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+		GIT_TAG ${TRACY_GIT_TAG}
+		GIT_SHALLOW TRUE
+		GIT_PROGRESS TRUE
+	)
+	FetchContent_MakeAvailable(tracy)
+endif()
+
 target_sources(
 	${CMAKE_PROJECT_NAME} PRIVATE
 
@@ -168,6 +202,30 @@ file(WRITE "${CMAKE_BINARY_DIR}/include/Globals.h"
 
 configure_file("BuildInfo.h.cmake" "${CMAKE_BINARY_DIR}/include/BuildInfo.h")
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_BINARY_DIR}/include/" ".")
+
+if(TRACY_ENABLE)
+	target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_ENABLE)
+	if(TRACY_ON_DEMAND)
+		target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_ON_DEMAND)
+	endif()
+	if(TRACY_NO_BROADCAST)
+		target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_NO_BROADCAST)
+	endif()
+	if(TRACY_ONLY_LOCALHOST)
+		target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_ONLY_LOCALHOST)
+	endif()
+	if(TRACY_ONLY_IPV4)
+		target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_ONLY_IPV4)
+	endif()
+	if(NOT TRACY_CLIENT_ADDRESS STREQUAL "")
+		target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_CLIENT_ADDRESS="${TRACY_CLIENT_ADDRESS}")
+	endif()
+	if(NOT TRACY_DATA_PORT STREQUAL "")
+		target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -DTRACY_DATA_PORT="${TRACY_DATA_PORT}")
+	endif()
+
+	target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC TracyClient)
+endif()
 
 # Generate AllFiles.lst for CheckBasicStyle.lua
 get_target_property(ALL_FILES ${CMAKE_PROJECT_NAME} SOURCES)

@@ -107,6 +107,14 @@
 
 
 
+#ifdef TRACY_ENABLE
+	#include <tracy/Tracy.hpp>
+#endif
+
+
+
+
+
 // CRT stuff:
 #include <cassert>
 #include <cstdio>
