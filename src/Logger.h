@@ -49,6 +49,12 @@ public:
 		cAttachment(cListener * a_listener) : m_listener(a_listener) {}
 	};
 
+private:
+	cLogger():
+		m_CriticalSection("Logger")
+	{}
+
+public:
 	/** Log a message formatted with a printf style formatting string. */
 	void LogPrintf(std::string_view a_Format, eLogLevel a_LogLevel, fmt::printf_args a_ArgList);
 

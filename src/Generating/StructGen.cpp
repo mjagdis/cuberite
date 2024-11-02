@@ -17,6 +17,8 @@
 
 void cStructGenTrees::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 
@@ -313,6 +315,8 @@ double cStructGenTrees::GetNumTrees(
 
 void cStructGenLakes::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 
@@ -438,6 +442,8 @@ void cStructGenDirectOverhangs::GenFinish(cChunkDesc & a_ChunkDesc)
 		return;
 	}
 
+	ZoneScopedC(tracy::Color::Yellow);
+
 	HEIGHTTYPE MaxHeight = a_ChunkDesc.GetMaxHeight();
 
 	const int SEGMENT_HEIGHT = 8;
@@ -550,6 +556,8 @@ cStructGenDistortedMembraneOverhangs::cStructGenDistortedMembraneOverhangs(int a
 
 void cStructGenDistortedMembraneOverhangs::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	const NOISE_DATATYPE Frequency = static_cast<NOISE_DATATYPE>(16);
 	const NOISE_DATATYPE Amount = static_cast<NOISE_DATATYPE>(1);
 	for (int y = 50; y < 128; y++)

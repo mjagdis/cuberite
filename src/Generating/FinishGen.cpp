@@ -47,6 +47,8 @@ static inline bool IsWater(BLOCKTYPE a_BlockType)
 
 void cFinishGenNetherClumpFoliage::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 
@@ -184,6 +186,8 @@ void cFinishGenNetherClumpFoliage::TryPlaceClump(cChunkDesc & a_ChunkDesc, int a
 
 void cFinishGenClumpTopBlock::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 
@@ -408,6 +412,8 @@ std::vector<cFinishGenClumpTopBlock::BiomeInfo> cFinishGenClumpTopBlock::ParseIn
 
 void cFinishGenGlowStone::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 
@@ -520,6 +526,8 @@ void cFinishGenGlowStone::TryPlaceGlowstone(cChunkDesc & a_ChunkDesc, int a_RelX
 
 void cFinishGenTallGrass::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	for (int x = 0; x < cChunkDef::Width; x++)
 	{
 		int xx = x + a_ChunkDesc.GetChunkX() * cChunkDef::Width;
@@ -762,6 +770,8 @@ bool cFinishGenVines::IsJungleVariant(EMCSBiome a_Biome)
 
 void cFinishGenVines::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	for (int x = 0; x < cChunkDef::Width; x++)
 	{
 		int xx = x + a_ChunkDesc.GetChunkX() * cChunkDef::Width;
@@ -944,6 +954,8 @@ bool cFinishGenSprinkleFoliage::TryAddSugarcane(cChunkDesc & a_ChunkDesc, int a_
 
 void cFinishGenSprinkleFoliage::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Generate small foliage (1-block):
 
 	// TODO: Update heightmap with 1-block-tall foliage
@@ -1034,6 +1046,8 @@ bool cFinishGenSprinkleFoliage::IsDesertVariant(EMCSBiome a_Biome)
 
 void cFinishGenSoulsandRims::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX() * cChunkDef::Width;
 	int ChunkZ = a_ChunkDesc.GetChunkZ() * cChunkDef::Width;
 	HEIGHTTYPE MaxHeight = a_ChunkDesc.GetMaxHeight();
@@ -1086,6 +1100,8 @@ void cFinishGenSoulsandRims::GenFinish(cChunkDesc & a_ChunkDesc)
 
 void cFinishGenSnow::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Add a snow block in snowy biomes onto blocks that can be snowed over
 	for (int z = 0; z < cChunkDef::Width; z++)
 	{
@@ -1119,6 +1135,8 @@ void cFinishGenSnow::GenFinish(cChunkDesc & a_ChunkDesc)
 
 void cFinishGenIce::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Turn surface water into ice in icy biomes
 	for (int z = 0; z < cChunkDef::Width; z++)
 	{
@@ -1174,6 +1192,8 @@ int cFinishGenSingleTopBlock::GetNumToGen(const cChunkDef::BiomeMap & a_BiomeMap
 
 void cFinishGenSingleTopBlock::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int NumToGen = GetNumToGen(a_ChunkDesc.GetBiomeMap());
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
@@ -1222,6 +1242,8 @@ void cFinishGenSingleTopBlock::GenFinish(cChunkDesc & a_ChunkDesc)
 
 void cFinishGenBottomLava::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	cChunkDef::BlockTypes & BlockTypes = a_ChunkDesc.GetBlockTypes();
 	for (int y = m_Level; y > 0; y--)
 	{
@@ -1257,6 +1279,8 @@ cFinishGenPreSimulator::cFinishGenPreSimulator(bool a_PreSimulateFallingBlocks, 
 
 void cFinishGenPreSimulator::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	if (m_PreSimulateFallingBlocks)
 	{
 		CollapseSandGravel(a_ChunkDesc);
@@ -1475,6 +1499,8 @@ cFinishGenFluidSprings::cFinishGenFluidSprings(int a_Seed, BLOCKTYPE a_Fluid, cI
 
 void cFinishGenFluidSprings::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChanceRnd = (m_Noise.IntNoise3DInt(128 * a_ChunkDesc.GetChunkX(), 512, 256 * a_ChunkDesc.GetChunkZ()) / 13) % 100;
 	if (ChanceRnd > m_Chance)
 	{
@@ -1607,6 +1633,8 @@ cFinishGenPassiveMobs::cFinishGenPassiveMobs(int a_Seed, cIniFile & a_IniFile, e
 
 void cFinishGenPassiveMobs::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int chunkX = a_ChunkDesc.GetChunkX();
 	int chunkZ = a_ChunkDesc.GetChunkZ();
 	int ChanceRnd = (m_Noise.IntNoise2DInt(chunkX, chunkZ) / 7) % 100;
@@ -1733,6 +1761,8 @@ eMonsterType cFinishGenPassiveMobs::GetRandomMob(cChunkDesc & a_ChunkDesc)
 
 void cFinishGenOres::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int seq = 1;
 
 	// Generate the ores from the ore list.
@@ -2249,6 +2279,8 @@ cFinishGenForestRocks::cFinishGenForestRocks(int a_Seed, cIniFile & a_IniFile) :
 
 void cFinishGenForestRocks::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Choose random position in chunk and place boulder around it
 	auto Pos = Vector3i(
 		m_Noise.IntNoise2DInt(a_ChunkDesc.GetChunkX(), a_ChunkDesc.GetChunkZ()) % cChunkDef::Width,

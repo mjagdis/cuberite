@@ -37,9 +37,11 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 // cWorldStorage:
 
-cWorldStorage::cWorldStorage(void) :
-	Super("World Storage Executor"),
-	m_World(nullptr),
+cWorldStorage::cWorldStorage(cWorld & a_World) :
+	Super(fmt::format(FMT_STRING("{} Storage"), a_World.GetName())),
+	m_World(&a_World),
+	m_LoadQueue("LoadQueue"),
+	m_SaveQueue("SaveQueue"),
 	m_SaveSchema(nullptr)
 {
 }
@@ -62,7 +64,6 @@ cWorldStorage::~cWorldStorage()
 
 void cWorldStorage::Initialize(cWorld & a_World, const AString & a_StorageSchemaName, int a_StorageCompressionFactor)
 {
-	m_World = &a_World;
 	m_StorageSchemaName = a_StorageSchemaName;
 	InitSchemas(a_StorageCompressionFactor);
 }
@@ -234,6 +235,8 @@ bool cWorldStorage::LoadOneChunk(void)
 		return false;
 	}
 
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Load the chunk:
 	LoadChunk(ToLoad.m_ChunkX, ToLoad.m_ChunkZ);
 
@@ -257,6 +260,8 @@ bool cWorldStorage::SaveOneChunk(void)
 	// Save the chunk, if it's valid:
 	if (m_World->IsChunkValid(ToSave.m_ChunkX, ToSave.m_ChunkZ))
 	{
+		ZoneScopedC(tracy::Color::LightGreen);
+
 		m_World->MarkChunkSaving(ToSave.m_ChunkX, ToSave.m_ChunkZ);
 		if (m_SaveSchema->SaveChunk(cChunkCoords(ToSave.m_ChunkX, ToSave.m_ChunkZ)))
 		{

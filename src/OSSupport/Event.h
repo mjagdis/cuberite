@@ -44,7 +44,7 @@ private:
 	std::mutex m_Mutex;
 
 	/** The condition variable used as the Event. */
-	std::condition_variable m_CondVar;
+	std::condition_variable_any m_CondVar;
 } ;
 
 

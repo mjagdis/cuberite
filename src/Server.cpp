@@ -104,7 +104,9 @@ void cServer::cTickThread::Execute(void)
 // cServer:
 
 cServer::cServer(void) :
+	m_CSClients("Clients"),
 	m_PlayerCount(0),
+	m_CSPendingCommands("PendingCommands"),
 	m_ClientViewDistance(0),
 	m_bIsConnected(false),
 	m_RCONServer(*this),
@@ -112,7 +114,8 @@ cServer::cServer(void) :
 	m_bIsHardcore(false),
 	m_TickThread(*this),
 	m_ShouldAuthenticate(false),
-	m_UpTime(0)
+	m_UpTime(0),
+	m_CSTasks("Tasks")
 {
 	// Initialize the LuaStateTracker singleton before the app goes multithreaded:
 	cLuaStateTracker::GetStats();

@@ -63,6 +63,10 @@ The canon state must be available without accessing the Lua state itself (so it 
 class cCanonLuaStates
 {
 public:
+	cCanonLuaStates():
+		m_CS("CanonLuaState")
+	{}
+
 	/** Returns the canon Lua state for the specified lua_State pointer. */
 	static cLuaState * GetCanonState(lua_State * a_LuaState)
 	{
@@ -435,10 +439,12 @@ void cLuaState::cStackTable::ForEachElement(cFunctionRef<bool(cLuaState & a_LuaS
 // cLuaState:
 
 cLuaState::cLuaState(const AString & a_SubsystemName) :
+	m_CS("LuaState"),
 	m_LuaState(nullptr),
 	m_IsOwned(false),
 	m_SubsystemName(a_SubsystemName),
-	m_NumCurrentFunctionArgs(-1)
+	m_NumCurrentFunctionArgs(-1),
+	m_CSTrackedRefs("TrackedRefs")
 {
 }
 
@@ -447,10 +453,12 @@ cLuaState::cLuaState(const AString & a_SubsystemName) :
 
 
 cLuaState::cLuaState(lua_State * a_AttachState) :
+	m_CS("LuaState"),
 	m_LuaState(a_AttachState),
 	m_IsOwned(false),
 	m_SubsystemName("<attached>"),
-	m_NumCurrentFunctionArgs(-1)
+	m_NumCurrentFunctionArgs(-1),
+	m_CSTrackedRefs("TrackedRefs")
 {
 }
 

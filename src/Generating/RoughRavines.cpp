@@ -156,6 +156,8 @@ protected:
 
 	virtual void DrawIntoChunk(cChunkDesc & a_ChunkDesc) override
 	{
+		ZoneScopedC(tracy::Color::Yellow);
+
 		int BlockStartX = a_ChunkDesc.GetChunkX() * cChunkDef::Width;
 		int BlockStartZ = a_ChunkDesc.GetChunkZ() * cChunkDef::Width;
 		int BlockEndX = BlockStartX + cChunkDef::Width;
@@ -275,6 +277,8 @@ cRoughRavines::cRoughRavines(
 
 cGridStructGen::cStructurePtr cRoughRavines::CreateStructure(int a_GridX, int a_GridZ, int a_OriginX, int a_OriginZ)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Pick a random value for each of the ravine's parameters:
 	size_t Size = static_cast<size_t>(m_MinSize + (m_Noise.IntNoise2DInt(a_GridX, a_GridZ) / 7) % (m_MaxSize - m_MinSize));  // Random int from m_MinSize to m_MaxSize
 	float CenterWidth         = m_Noise.IntNoise2DInRange(a_GridX + 10, a_GridZ, m_MinCenterWidth,         m_MaxCenterWidth);

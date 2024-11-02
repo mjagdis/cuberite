@@ -16,6 +16,7 @@
 
 
 cNetworkSingleton::cNetworkSingleton() :
+	m_CS("NetworkSingleton"),
 	m_HasTerminated(true)
 {
 }

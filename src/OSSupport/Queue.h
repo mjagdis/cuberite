@@ -49,7 +49,10 @@ class cQueue
 	typedef typename QueueType::iterator iterator;
 
 public:
-	cQueue() {}
+	cQueue(std::string_view a_Name):
+		m_CS(a_Name)
+	{}
+
 	~cQueue() {}
 
 

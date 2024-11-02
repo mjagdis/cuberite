@@ -59,6 +59,7 @@ public:
 // cWebAdmin:
 
 cWebAdmin::cWebAdmin(void) :
+	m_CS("WebAdmin"),
 	m_TemplateScript("<webadmin_template>"),
 	m_IsInitialized(false),
 	m_IsRunning(false)

@@ -238,6 +238,8 @@ protected:
 	// cGridStructGen::cStructure override:
 	virtual void DrawIntoChunk(cChunkDesc & a_ChunkDesc) override
 	{
+		ZoneScopedC(tracy::Color::Yellow);
+
 		if (
 			(m_EndX   <  a_ChunkDesc.GetChunkX() * cChunkDef::Width) ||
 			(m_StartX >= a_ChunkDesc.GetChunkX() * cChunkDef::Width + cChunkDef::Width) ||
@@ -310,6 +312,8 @@ cDungeonRoomsFinisher::cDungeonRoomsFinisher(cTerrainShapeGen & a_ShapeGen, int 
 
 cDungeonRoomsFinisher::cStructurePtr cDungeonRoomsFinisher::CreateStructure(int a_GridX, int a_GridZ, int a_OriginX, int a_OriginZ)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Select a random room size in each direction:
 	int rnd = m_Noise.IntNoise2DInt(a_OriginX, a_OriginZ) / 7;
 	int HalfSizeX = m_MinHalfSize + (rnd % (m_MaxHalfSize - m_MinHalfSize + 1));

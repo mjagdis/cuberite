@@ -96,7 +96,7 @@ cWorld::cLock::cLock(const cWorld & a_World) :
 // cWorld::cTickThread:
 
 cWorld::cTickThread::cTickThread(cWorld & a_World):
-	Super(fmt::format(FMT_STRING("World Ticker ({})"), a_World.GetName())),
+	Super(fmt::format(FMT_STRING("{} Tick"), a_World.GetName())),
 	m_World(a_World)
 {
 }
@@ -176,6 +176,7 @@ cWorld::cWorld(
 	m_LavaSimulator(nullptr),
 	m_FireSimulator(),
 	m_RedstoneSimulator(nullptr),
+	m_Storage(*this),
 	m_MaxPlayers(10),
 	m_ChunkMap(this),
 	m_bAnimals(true),
@@ -209,12 +210,16 @@ cWorld::cWorld(
 	m_bUseChatPrefixes(false),
 	m_TNTShrapnelLevel(slNone),
 	m_MaxViewDistance(12),
+	m_Generator(*this),
 	m_Scoreboard(this),
 	m_MapManager(this),
 	m_GeneratorCallbacks(*this),
 	m_ChunkSender(*this),
 	m_Lighting(*this),
-	m_TickThread(*this)
+	m_TickThread(*this),
+	m_CSTasks("Tasks"),
+	m_CSEntitiesToAdd("EntitiesToAdd"),
+	m_CSSetChunkDataQueue("SetChunkDataQueue")
 {
 	LOGD("cWorld::cWorld(\"%s\")", a_WorldName);
 
@@ -1001,6 +1006,10 @@ void cWorld::Stop(cDeadlockDetect & a_DeadlockDetect)
 
 void cWorld::Tick(std::chrono::milliseconds a_Dt, std::chrono::milliseconds a_LastTickDurationMSec)
 {
+	FrameMarkStart(m_WorldName.c_str());
+
+	ZoneScoped;
+
 	// Notify the plugins:
 	cPluginManager::Get()->CallHookWorldTick(*this, a_Dt, a_LastTickDurationMSec);
 
@@ -1051,6 +1060,8 @@ void cWorld::Tick(std::chrono::milliseconds a_Dt, std::chrono::milliseconds a_La
 		Player->GetClientHandle()->ProcessProtocolOut();
 	}
 
+	FrameMarkEnd(m_WorldName.c_str());
+
 	if (m_WorldAge - m_LastChunkCheck > std::chrono::seconds(10))
 	{
 		// Unload every 10 seconds
@@ -1075,6 +1086,8 @@ void cWorld::Tick(std::chrono::milliseconds a_Dt, std::chrono::milliseconds a_La
 
 void cWorld::TickClients(const std::chrono::milliseconds a_Dt)
 {
+	ZoneScoped;
+
 	for (const auto Player : m_Players)
 	{
 		Player->GetClientHandle()->Tick(a_Dt);
@@ -1088,6 +1101,9 @@ void cWorld::TickClients(const std::chrono::milliseconds a_Dt)
 void cWorld::TickWeather(float a_Dt)
 {
 	UNUSED(a_Dt);
+
+	ZoneScoped;
+
 	// There are no weather changes anywhere but in the Overworld:
 	if (GetDimension() != dimOverworld)
 	{
@@ -1121,6 +1137,8 @@ void cWorld::TickWeather(float a_Dt)
 
 void cWorld::TickMobs(std::chrono::milliseconds a_Dt)
 {
+	ZoneScoped;
+
 	// _X 2013_10_22: This is a quick fix for #283 - the world needs to be locked while ticking mobs
 	cWorld::cLock Lock(*this);
 
@@ -1207,6 +1225,8 @@ void cWorld::TickMobs(std::chrono::milliseconds a_Dt)
 
 void cWorld::TickQueuedChunkDataSets()
 {
+	ZoneScoped;
+
 	decltype(m_SetChunkDataQueue) SetChunkDataQueue;
 	{
 		cCSLock Lock(m_CSSetChunkDataQueue);
@@ -1249,6 +1269,8 @@ void cWorld::TickQueuedChunkDataSets()
 
 void cWorld::TickQueuedEntityAdditions(void)
 {
+	ZoneScoped;
+
 	decltype(m_EntitiesToAdd) EntitiesToAdd;
 	{
 		cCSLock Lock(m_CSEntitiesToAdd);
@@ -1288,6 +1310,8 @@ void cWorld::TickQueuedEntityAdditions(void)
 
 void cWorld::TickQueuedTasks(void)
 {
+	ZoneScoped;
+
 	// Move the tasks to be executed to a seperate vector to avoid deadlocks on accessing m_Tasks
 	decltype(m_Tasks) Tasks;
 	{
@@ -2837,6 +2861,8 @@ void cWorld::GetChunkStats(int & a_NumValid, int & a_NumDirty, int & a_NumInLigh
 
 void cWorld::TickQueuedBlocks(void)
 {
+	ZoneScoped;
+
 	if (m_BlockTickQueue.empty())
 	{
 		return;

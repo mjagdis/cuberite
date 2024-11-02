@@ -50,6 +50,8 @@ cFloodyFluidSimulator::cFloodyFluidSimulator(
 
 void cFloodyFluidSimulator::SimulateBlock(cChunk * a_Chunk, int a_RelX, int a_RelY, int a_RelZ)
 {
+	ZoneScopedC(tracy::Color::LightBlue);
+
 	FLUID_FLOG("Simulating block {0}: block {1}, meta {2}",
 		a_Chunk->PositionToWorldPosition(a_RelX, a_RelY, a_RelZ),
 		a_Chunk->GetBlock(a_RelX, a_RelY, a_RelZ),

@@ -26,6 +26,7 @@ cPluginManager * cPluginManager::Get(void)
 
 
 cPluginManager::cPluginManager(cDeadlockDetect & a_DeadlockDetect) :
+	m_CSPluginsNeedAction("PluginsNeedAction"),
 	m_bReloadPlugins(false),
 	m_DeadlockDetect(a_DeadlockDetect)
 {

@@ -80,6 +80,8 @@ cDelayedFluidSimulator::cDelayedFluidSimulator(cWorld & a_World, BLOCKTYPE a_Flu
 
 void cDelayedFluidSimulator::Simulate(float a_Dt)
 {
+	ZoneScopedC(tracy::Color::LightBlue);
+
 	m_AddSlotNum = m_SimSlotNum;
 	m_SimSlotNum += 1;
 	if (m_SimSlotNum >= m_TickDelay)
@@ -94,6 +96,8 @@ void cDelayedFluidSimulator::Simulate(float a_Dt)
 
 void cDelayedFluidSimulator::SimulateChunk(std::chrono::milliseconds a_Dt, int a_ChunkX, int a_ChunkZ, cChunk * a_Chunk)
 {
+	ZoneScopedC(tracy::Color::LightBlue);
+
 	auto ChunkDataRaw = (m_FluidBlock == E_BLOCK_WATER) ? a_Chunk->GetWaterSimulatorData() : a_Chunk->GetLavaSimulatorData();
 	cDelayedFluidSimulatorChunkData * ChunkData = static_cast<cDelayedFluidSimulatorChunkData *>(ChunkDataRaw);
 	cDelayedFluidSimulatorChunkData::cSlot & Slot = ChunkData->m_Slots[m_SimSlotNum];

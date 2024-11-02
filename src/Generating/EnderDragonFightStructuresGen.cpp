@@ -153,6 +153,8 @@ void cEnderDragonFightStructuresGen::Init(const AString & a_TowerProperties, int
 
 void cEnderDragonFightStructuresGen::GenFinish(cChunkDesc &a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	auto Coords = a_ChunkDesc.GetChunkCoords();
 	// If not in the chunks to write
 	if ((Coords.m_ChunkX > m_MaxX) ||

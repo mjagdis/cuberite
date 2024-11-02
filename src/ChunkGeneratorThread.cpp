@@ -21,8 +21,9 @@ const size_t QUEUE_SKIP_LIMIT = 10 * 128 * 128;
 
 
 
-cChunkGeneratorThread::cChunkGeneratorThread(void) :
-	Super("Chunk Generator"),
+cChunkGeneratorThread::cChunkGeneratorThread(cWorld & a_World) :
+	Super(fmt::format(FMT_STRING("{} Chunk Generator"), a_World.GetName())),
+	m_CS("ChunkGenerator"),
 	m_Generator(nullptr),
 	m_PluginInterface(nullptr),
 	m_ChunkSink(nullptr)

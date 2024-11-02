@@ -12,7 +12,7 @@
 
 
 
-cCriticalSection cMapManager::m_CS;
+cCriticalSection cMapManager::m_CS("MapManager");
 
 unsigned int cMapManager::m_NextID = 0;
 

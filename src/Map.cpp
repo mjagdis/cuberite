@@ -336,6 +336,7 @@ protected:
 
 
 cMap::cMap(unsigned int a_ID, cWorld * a_World):
+	m_CS("Map"),
 	m_ID(a_ID),
 	m_Scale(3),
 	m_CenterX(0),
@@ -364,6 +365,7 @@ cMap::cMap(unsigned int a_ID, cWorld * a_World):
 
 
 cMap::cMap(unsigned int a_ID, eMapIcon a_MapType, int a_X, int a_Z, cWorld * a_World, unsigned int a_Scale):
+	m_CS("Map"),
 	m_ID(a_ID),
 	m_Scale(a_Scale),
 	m_CenterX(SnapToGrid(a_X, a_Scale)),
@@ -394,6 +396,7 @@ cMap::cMap(unsigned int a_ID, eMapIcon a_MapType, int a_X, int a_Z, cWorld * a_W
 
 
 cMap::cMap(unsigned int a_ID, cMap & a_Map):
+	m_CS("Map"),
 	m_ID(a_ID),
 	m_Scale(a_Map.m_Scale),
 	m_CenterX(a_Map.m_CenterX),
@@ -428,6 +431,8 @@ cMap::cMap(unsigned int a_ID, cMap & a_Map):
 
 void cMap::Tick()
 {
+	ZoneScoped;
+
 	cCSLock Lock(m_CS);
 
 #if 0

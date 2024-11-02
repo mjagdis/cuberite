@@ -93,6 +93,13 @@ void cIsThread::Entrypoint(void)
 
 void cIsThread::SetThreadName() const
 {
+#ifdef TRACY_ENABLE
+	// See the tracy manual for the required lifetime of names.
+	char * name = new char[m_ThreadName.length() + 1];
+	strncpy(name, m_ThreadName.c_str(), m_ThreadName.length() + 1);
+	tracy::SetThreadName(name);
+#endif
+
 #if defined(_MSC_VER) && !defined(NDEBUG)
 	/* Sets the name of this thread.
 	(When in MSVC, the debugger provides "thread naming" by catching special exceptions)

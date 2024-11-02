@@ -219,6 +219,8 @@ void cGridStructGen::GetStructuresForChunk(int a_ChunkX, int a_ChunkZ, cStructur
 
 void cGridStructGen::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 	cStructurePtrs Structures;

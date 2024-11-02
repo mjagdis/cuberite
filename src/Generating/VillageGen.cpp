@@ -178,6 +178,8 @@ protected:
 	// cGridStructGen::cStructure overrides:
 	virtual void DrawIntoChunk(cChunkDesc & a_Chunk) override
 	{
+		ZoneScopedC(tracy::Color::Yellow);
+
 		// Iterate over all items
 		// Each intersecting prefab is placed on ground, then drawn
 		// Each intersecting road is drawn by replacing top soil blocks with gravel / sandstone blocks
@@ -375,6 +377,8 @@ cVillageGen::cVillageGen(
 
 cGridStructGen::cStructurePtr cVillageGen::CreateStructure(int a_GridX, int a_GridZ, int a_OriginX, int a_OriginZ)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	// Generate the biomes for the chunk surrounding the origin:
 	int ChunkX, ChunkZ;
 	cChunkDef::BlockToChunk(a_OriginX, a_OriginZ, ChunkX, ChunkZ);

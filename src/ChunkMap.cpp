@@ -28,6 +28,7 @@
 // cChunkMap:
 
 cChunkMap::cChunkMap(cWorld * a_World) :
+	m_CSChunks("ChunkMap"),
 	m_World(a_World)
 {
 }
@@ -1342,6 +1343,8 @@ void cChunkMap::SpawnMobs(cMobSpawner & a_MobSpawner)
 
 void cChunkMap::Tick(std::chrono::milliseconds a_Dt)
 {
+	ZoneScoped;
+
 	cCSLock Lock(m_CSChunks);
 
 	// Do the magic of updating the world:
@@ -1366,6 +1369,8 @@ void cChunkMap::Tick(std::chrono::milliseconds a_Dt)
 
 void cChunkMap::TickBlock(const Vector3i a_BlockPos)
 {
+	ZoneScoped;
+
 	auto ChunkPos = cChunkDef::BlockToChunk(a_BlockPos);
 	auto RelPos = cChunkDef::AbsoluteToRelative(a_BlockPos, ChunkPos);
 	cCSLock Lock(m_CSChunks);
@@ -1383,6 +1388,8 @@ void cChunkMap::TickBlock(const Vector3i a_BlockPos)
 
 void cChunkMap::UnloadUnusedChunks(void)
 {
+	ZoneScoped;
+
 	cCSLock Lock(m_CSChunks);
 	for (auto itr = m_Chunks.begin(); itr != m_Chunks.end();)
 	{
@@ -1413,6 +1420,8 @@ void cChunkMap::UnloadUnusedChunks(void)
 
 void cChunkMap::SaveAllChunks(void) const
 {
+	ZoneScoped;
+
 	cCSLock Lock(m_CSChunks);
 	for (const auto & Chunk : m_Chunks)
 	{

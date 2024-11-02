@@ -108,7 +108,11 @@
 
 
 #ifdef TRACY_ENABLE
+	// We want the class prefix to differentiate functions.
+	#define TracyFunction __PRETTY_FUNCTION__
+
 	#include <tracy/Tracy.hpp>
+	#include <tracy/TracyC.h>
 #endif
 
 

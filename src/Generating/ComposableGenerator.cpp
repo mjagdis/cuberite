@@ -157,6 +157,8 @@ void cComposableGenerator::GenerateBiomes(cChunkCoords a_ChunkCoords, cChunkDef:
 
 void cComposableGenerator::Generate(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	if (a_ChunkDesc.IsUsingDefaultBiomes())
 	{
 		m_BiomeGen->GenBiomes(a_ChunkDesc.GetChunkCoords(), a_ChunkDesc.GetBiomeMap());

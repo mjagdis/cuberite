@@ -73,7 +73,7 @@ public:
 	} ;
 
 
-	cChunkGeneratorThread (void);
+	cChunkGeneratorThread(cWorld & a_World);
 	virtual ~cChunkGeneratorThread() override;
 
 	/** Read settings from the ini file and initialize in preperation for being started. */

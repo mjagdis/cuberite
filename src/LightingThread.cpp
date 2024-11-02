@@ -100,8 +100,9 @@ public:
 // cLightingThread:
 
 cLightingThread::cLightingThread(cWorld & a_World):
-	Super("Lighting Executor"),
+	Super(fmt::format(FMT_STRING("{} Lighting"), a_World.GetName())),
 	m_World(a_World),
+	m_CS("LightingThread"),
 	m_MaxHeight(0),
 	m_NumSeeds(0)
 {

@@ -72,6 +72,9 @@ cClientHandle::cClientHandle(const AString & a_IPString, int a_ViewDistance) :
 	m_CurrentViewDistance(a_ViewDistance),
 	m_RequestedViewDistance(a_ViewDistance),
 	m_IPString(a_IPString),
+	m_CSChunkLists("ChunkLists"),
+	m_CSIncomingData("IncomingData"),
+	m_CSOutgoingData("OutgoingData"),
 	m_Player(nullptr),
 	m_CachedSentChunk(std::numeric_limits<decltype(m_CachedSentChunk.m_ChunkX)>::max(), std::numeric_limits<decltype(m_CachedSentChunk.m_ChunkZ)>::max()),
 	m_ProxyConnection(false),
@@ -87,6 +90,7 @@ cClientHandle::cClientHandle(const AString & a_IPString, int a_ViewDistance) :
 	m_BlockDigAnimPos(s_IllegalPosition),
 	m_HasStartedDigging(false),
 	m_LastDigBlockPos(s_IllegalPosition),
+	m_CSState("State"),
 	m_State(csConnected),
 	m_NumExplosionsThisTick(0),
 	m_NumBlockChangeInteractionsThisTick(0),
@@ -245,6 +249,8 @@ void cClientHandle::ProxyInit(const AString & a_IPString, const cUUID & a_UUID, 
 
 void cClientHandle::ProcessProtocolIn(void)
 {
+	ZoneScoped;
+
 	// Process received network data:
 	decltype(m_IncomingData) IncomingData;
 	{
@@ -275,6 +281,8 @@ void cClientHandle::ProcessProtocolIn(void)
 
 void cClientHandle::ProcessProtocolOut()
 {
+	ZoneScoped;
+
 	decltype(m_OutgoingData) OutgoingData;
 	{
 		cCSLock Lock(m_CSOutgoingData);
@@ -2104,6 +2112,8 @@ bool cClientHandle::IsWithinReach(const Vector3i a_Position) const
 
 void cClientHandle::Tick(std::chrono::milliseconds a_Dt)
 {
+	ZoneScoped;
+
 	using namespace std::chrono_literals;
 
 	if (IsDestroyed())

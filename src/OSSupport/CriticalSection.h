@@ -13,7 +13,7 @@ public:
 	void Lock(void);
 	void Unlock(void);
 
-	cCriticalSection(void);
+	cCriticalSection(std::string_view a_Name);
 
 	/** Returns true if the CS is currently locked.
 	Note that since it relies on the m_RecursionCount value, it is inherently thread-unsafe, prone to false positives.
@@ -42,7 +42,11 @@ private:
 	It is only ever read without the lock in the DeadlockDetect, where the server is terminating anyway. */
 	std::thread::id m_OwningThreadID;
 
-	std::recursive_mutex m_Mutex;
+	TracyLockable(std::recursive_mutex, m_Mutex);
+
+#ifdef TRACY_ENABLE
+	TracyCZoneCtx m_TracyContext;
+#endif
 };
 
 

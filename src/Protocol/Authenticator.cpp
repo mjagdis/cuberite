@@ -27,6 +27,7 @@ constexpr char DEFAULT_AUTH_ADDRESS[] = "/session/minecraft/hasJoined?username=%
 
 cAuthenticator::cAuthenticator(void) :
 	Super("Authenticator"),
+	m_CS("Authenticator"),
 	m_Server(DEFAULT_AUTH_SERVER),
 	m_Address(DEFAULT_AUTH_ADDRESS),
 	m_ShouldAuthenticate(true)

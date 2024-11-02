@@ -14,7 +14,8 @@
 
 cLuaServerHandle::cLuaServerHandle(UInt16 a_Port, cLuaState::cTableRefPtr && a_Callbacks):
 	m_Callbacks(std::move(a_Callbacks)),
-	m_Port(a_Port)
+	m_Port(a_Port),
+	m_CSConnections("LuaServerHandle")
 {
 }
 

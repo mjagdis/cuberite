@@ -270,7 +270,10 @@ size_t cTeam::GetNumPlayers(void) const
 
 
 
-cScoreboard::cScoreboard(cWorld * a_World) : m_World(a_World)
+cScoreboard::cScoreboard(cWorld * a_World) :
+	m_CSObjectives("Objectives"),
+	m_CSTeams("Teams"),
+	m_World(a_World)
 {
 	for (int i = 0; i < static_cast<int>(dsCount); ++i)
 	{

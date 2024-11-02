@@ -92,6 +92,8 @@ cStructGenRavines::cStructGenRavines(int a_Seed, int a_Size) :
 
 cGridStructGen::cStructurePtr cStructGenRavines::CreateStructure(int a_GridX, int a_GridZ, int a_OriginX, int a_OriginZ)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	return cStructurePtr(new cRavine(a_GridX, a_GridZ, a_OriginX, a_OriginZ, m_Size, m_Noise));
 }
 
@@ -325,6 +327,8 @@ AString cStructGenRavines::cRavine::ExportAsSVG(int a_Color, int a_OffsetX, int 
 
 void cStructGenRavines::cRavine::DrawIntoChunk(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int BlockStartX = a_ChunkDesc.GetChunkX() * cChunkDef::Width;
 	int BlockStartZ = a_ChunkDesc.GetChunkZ() * cChunkDef::Width;
 	int BlockEndX = BlockStartX + cChunkDef::Width;

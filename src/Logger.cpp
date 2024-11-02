@@ -73,6 +73,8 @@ void cLogger::LogSimple(std::string_view a_Message, eLogLevel a_LogLevel)
 
 void cLogger::LogLine(std::string_view a_Line, eLogLevel a_LogLevel)
 {
+	TracyMessage(a_Line.data(), a_Line.size());
+
 	cCSLock Lock(m_CriticalSection);
 	for (size_t i = 0; i < m_LogListeners.size(); i++)
 	{

@@ -333,6 +333,8 @@ cStructGenMineShafts::cMineShaftSystem::~cMineShaftSystem()
 
 void cStructGenMineShafts::cMineShaftSystem::DrawIntoChunk(cChunkDesc & a_Chunk)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	for (cMineShafts::const_iterator itr = m_MineShafts.begin(), end = m_MineShafts.end(); itr != end; ++itr)
 	{
 		(*itr)->ProcessChunk(a_Chunk);
@@ -1307,6 +1309,8 @@ cStructGenMineShafts::cStructGenMineShafts(
 
 cGridStructGen::cStructurePtr cStructGenMineShafts::CreateStructure(int a_GridX, int a_GridZ, int a_OriginX, int a_OriginZ)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	return cStructurePtr(new cMineShaftSystem(a_GridX, a_GridZ, a_OriginX, a_OriginZ, m_GridSize, m_MaxSystemSize, m_Noise, m_ProbLevelCorridor, m_ProbLevelCrossing, m_ProbLevelStaircase));
 }
 

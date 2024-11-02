@@ -59,9 +59,10 @@ public:
 // cChunkSender:
 
 cChunkSender::cChunkSender(cWorld & a_World) :
-	Super("Chunk Sender"),
+	Super(fmt::format(FMT_STRING("{} ChunkSender"), a_World.GetName())),
 	m_World(a_World),
-	m_Serializer(m_World.GetDimension())
+	m_Serializer(m_World.GetDimension()),
+	m_CS("ChunkSender")
 {
 }
 

@@ -13,7 +13,7 @@
 void * operator new(decltype(sizeof(0)) count)
 {
 	auto ptr = malloc(count);
-	TracyAlloc(ptr, count);
+	TracyAllocS(ptr, count, 3);
 	return ptr;
 }
 
@@ -23,7 +23,7 @@ void * operator new(decltype(sizeof(0)) count)
 
 void operator delete(void * ptr) noexcept
 {
-	TracyFree(ptr);
+	TracyFreeS(ptr, 3);
 	free(ptr);
 }
 

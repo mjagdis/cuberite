@@ -214,7 +214,11 @@ protected:
 // cMojangAPI:
 
 cMojangAPI::cMojangAPI():
+	m_CSNameToUUID("NameToUUID"),
+	m_CSUUIDToName("UUIDToName"),
+	m_CSUUIDToProfile("UUIDToProfile"),
 	m_RankMgr(nullptr),
+	m_CSRankMgr("RankMgr"),
 	m_UpdateThread(new cUpdateThread(*this))
 {
 }

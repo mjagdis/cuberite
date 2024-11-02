@@ -17,6 +17,7 @@
 
 cRankManager::cRankManager(void) :
 	m_DB("Ranks.sqlite", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE),
+	m_CS("RankManager"),
 	m_IsInitialized(false)
 {
 }

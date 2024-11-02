@@ -88,7 +88,8 @@ public:
 
 cBlockingSslClientSocket::cBlockingSslClientSocket(void) :
 	m_Ssl(*this),
-	m_IsConnected(false)
+	m_IsConnected(false),
+	m_CSIncomingData("BlockingSslClientSocket")
 {
 	// Nothing needed yet
 }

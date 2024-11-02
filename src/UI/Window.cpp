@@ -31,6 +31,7 @@ cWindow::cWindow(WindowType a_WindowType, const AString & a_WindowTitle) :
 	m_WindowID(((++m_WindowIDCounter) % 127) + 1),
 	m_WindowType(a_WindowType),
 	m_WindowTitle(a_WindowTitle),
+	m_CS("Window"),
 	m_IsDestroyed(false),
 	m_Owner(nullptr)
 {

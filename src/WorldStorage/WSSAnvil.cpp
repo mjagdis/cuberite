@@ -82,6 +82,7 @@ Since only the header is actually in the memory, this number can be high, but st
 
 cWSSAnvil::cWSSAnvil(cWorld * a_World, int a_CompressionFactor):
 	Super(a_World),
+	m_CS("WSSAnvil"),
 	m_Compressor(a_CompressionFactor),
 	m_DataVersion(0)
 {

@@ -613,6 +613,8 @@ cStructGenWormNestCaves::cCaveSystem::~cCaveSystem()
 
 void cStructGenWormNestCaves::cCaveSystem::DrawIntoChunk(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	int ChunkX = a_ChunkDesc.GetChunkX();
 	int ChunkZ = a_ChunkDesc.GetChunkZ();
 	cChunkDef::BlockTypes        & BlockTypes = a_ChunkDesc.GetBlockTypes();
@@ -695,6 +697,8 @@ int cStructGenWormNestCaves::cCaveSystem::GetRadius(cNoise & a_Noise, int a_Orig
 
 cGridStructGen::cStructurePtr cStructGenWormNestCaves::CreateStructure(int a_GridX, int a_GridZ, int a_OriginX, int a_OriginZ)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	return cStructurePtr(new cCaveSystem(a_GridX, a_GridZ, a_OriginX, a_OriginZ, m_MaxOffset, m_Size, m_Noise));
 }
 
@@ -729,6 +733,8 @@ static float GetMarbleNoise( float x, float y, float z, cNoise & a_Noise)
 
 void cStructGenMarbleCaves::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	cNoise Noise(m_Seed);
 	for (int z = 0; z < cChunkDef::Width; z++)
 	{
@@ -765,6 +771,8 @@ void cStructGenMarbleCaves::GenFinish(cChunkDesc & a_ChunkDesc)
 
 void cStructGenDualRidgeCaves::GenFinish(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	for (int z = 0; z < cChunkDef::Width; z++)
 	{
 		const float zz = static_cast<float>(a_ChunkDesc.GetChunkZ() * cChunkDef::Width + z) / 10;

@@ -684,6 +684,8 @@ void cChunk::SpawnMobs(cMobSpawner & a_MobSpawner)
 
 void cChunk::Tick(std::chrono::milliseconds a_Dt)
 {
+	ZoneScoped;
+
 	TickBlocks();
 
 	// Tick all block entities in this chunk:
@@ -756,6 +758,8 @@ void cChunk::Tick(std::chrono::milliseconds a_Dt)
 
 void cChunk::TickBlock(const Vector3i a_RelPos)
 {
+	ZoneScoped;
+
 	cChunkInterface ChunkInterface(this->GetWorld()->GetChunkMap());
 	cBlockInServerPluginInterface PluginInterface(*this->GetWorld());
 	cBlockHandler::For(GetBlock(a_RelPos)).OnUpdate(ChunkInterface, *this->GetWorld(), PluginInterface, *this, a_RelPos);
@@ -833,6 +837,8 @@ void cChunk::CheckBlocks()
 
 void cChunk::TickBlocks(void)
 {
+	ZoneScoped;
+
 	cChunkInterface ChunkInterface(m_World->GetChunkMap());
 	cBlockInServerPluginInterface PluginInterface(*m_World);
 

@@ -43,6 +43,7 @@ public:
 
 	cProtocol(cClientHandle * a_Client) :
 		m_Client(a_Client),
+		m_CSPacket("Protocol"),
 		m_OutPacketBuffer(64 KiB),
 		m_OutPacketLenBuffer(20)  // 20 bytes is more than enough for one VarInt
 	{

@@ -9,9 +9,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 // cCriticalSection:
 
-cCriticalSection::cCriticalSection():
+cCriticalSection::cCriticalSection(std::string_view a_Name):
 	m_RecursionCount(0)
 {
+#ifdef TRACY_ENABLE
+	// See the tracy manual for the required lifetime of names.
+	char * name = new char[a_Name.length() + 1];
+	strncpy(name, a_Name.data(), a_Name.length() + 1);
+	LockableName(m_Mutex, name, a_Name.length());
+#endif
 }
 
 
@@ -22,8 +28,19 @@ void cCriticalSection::Lock()
 {
 	m_Mutex.lock();
 
+	auto count = m_RecursionCount;
+
 	m_RecursionCount += 1;
-	m_OwningThreadID = std::this_thread::get_id();
+
+	if (count == 0)
+	{
+		m_OwningThreadID = std::this_thread::get_id();
+	}
+
+#ifdef TRACY_ENABLE
+	TracyCZoneS(ctx, 4, true);
+	m_TracyContext = ctx;
+#endif
 }
 
 
@@ -33,9 +50,19 @@ void cCriticalSection::Lock()
 void cCriticalSection::Unlock()
 {
 	ASSERT(IsLockedByCurrentThread());
+
+	auto count = m_RecursionCount;
+
 	m_RecursionCount -= 1;
 
 	m_Mutex.unlock();
+
+	if (count == 1)
+	{
+	}
+#ifdef TRACY_ENABLE
+	TracyCZoneEnd(m_TracyContext);
+#endif
 }
 
 

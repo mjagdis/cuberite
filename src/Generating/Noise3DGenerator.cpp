@@ -210,6 +210,8 @@ void cNoise3DGenerator::GenerateBiomes(cChunkCoords a_ChunkCoords, cChunkDef::Bi
 
 void cNoise3DGenerator::Generate(cChunkDesc & a_ChunkDesc)
 {
+	ZoneScopedC(tracy::Color::Yellow);
+
 	NOISE_DATATYPE Noise[17 * 257 * 17];
 	GenerateNoiseArray(a_ChunkDesc.GetChunkCoords(), Noise);
 

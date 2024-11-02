@@ -39,6 +39,7 @@ cServerHandleImpl::cServerHandleImpl(cNetwork::cListenCallbacksPtr a_ListenCallb
 	m_ConnListener(nullptr),
 	m_SecondaryConnListener(nullptr),
 	m_IsListening(false),
+	m_CS("ServerHandleImpl"),
 	m_ErrorCode(0)
 {
 }

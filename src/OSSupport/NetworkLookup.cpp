@@ -11,7 +11,8 @@
 
 
 cNetworkLookup::cNetworkLookup() :
-	cIsThread("Network Lookup Executor")
+	cIsThread("Network Lookup Executor"),
+	m_WorkQueue("NetworkLookup")
 {
 }
 

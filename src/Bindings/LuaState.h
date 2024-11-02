@@ -1038,6 +1038,11 @@ extern template bool cLuaState::GetStackValue(int a_StackPos, Vector3i & a_Retur
 Can query each for the amount of currently used memory. */
 class cLuaStateTracker
 {
+private:
+	cLuaStateTracker():
+		m_CSLuaStates("LuaStates")
+	{}
+
 public:
 	/** Adds the specified Lua state to the internal list of LuaStates. */
 	static void Add(cLuaState & a_LuaState);

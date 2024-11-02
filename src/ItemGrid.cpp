@@ -16,6 +16,7 @@ cItemGrid::cItemGrid(int a_Width, int a_Height):
 	m_Width(a_Width),
 	m_Height(a_Height),
 	m_Slots(a_Width * a_Height),
+	m_CSListeners("Listeners"),
 	m_IsInTriggerListeners(false)
 {
 }

@@ -81,6 +81,8 @@ cFireSimulator::cFireSimulator(cWorld & a_World, cIniFile & a_IniFile) :
 
 void cFireSimulator::SimulateChunk(std::chrono::milliseconds a_Dt, int a_ChunkX, int a_ChunkZ, cChunk * a_Chunk)
 {
+	ZoneScopedC(tracy::Color::LightBlue);
+
 	cCoordWithIntList & Data = a_Chunk->GetFireSimulatorData();
 
 	int NumMSecs = static_cast<int>(a_Dt.count());
